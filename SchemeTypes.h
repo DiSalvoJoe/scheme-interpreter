@@ -1,3 +1,6 @@
+#ifndef SCHEMETYPES_H
+#define SCHEMETYPES_H
+
 typedef char* symbol;
 
 enum MarkStatus {
@@ -35,4 +38,4 @@ struct Object {
 
 typedef struct Object Object;
 
-
+#endif

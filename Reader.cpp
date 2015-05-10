@@ -2,9 +2,9 @@
 #include "Reader.h"
 #include <string>
 
-Tokenizer::Tokenizer(Object* scheme_string):
+Tokenizer::Tokenizer(Object* scheme_string, ChunkHeap& heap) :
 	symbol_table(SymbolTable::getSymbolTable()),
-	memory(Memory::getTheMemory())
+	memory(heap)
 {
 	index = 0;
 	this->scheme_string = scheme_string;
@@ -34,18 +34,26 @@ Token Tokenizer::nextToken() {
 
 	skipWhiteSpace();
 	auto tok_len_pair = getPrefixedToken();
-	if (tok_len_pair.first.token == END_TOKEN) {
-		// now it can be garbage collected, maybe.
-		scheme_string = nullptr;
-		return tok_len_pair.first;
-	}
-
-	if (tok_len_pair.first.token != NOTHING) {
-		index += tok_len_pair.second;
-		return tok_len_pair.first;
-	}
-
-	return getIdentifierStartingHere();
+    switch (tok_len_pair.first.token) {
+        case END_TOKEN:
+            // now it can be garbage collected, maybe.
+            scheme_string = nullptr;
+            return tok_len_pair.first;
+        case NOTHING:
+            return getIdentifierStartingHere();
+        case STRING_LITERAL:
+            return getStringLiteral();
+        case TRUE_LITERAL:
+        case FALSE_LITERAL:
+            index += tok_len_pair.second; // advance past token
+            tok_len_pair.first.scheme_symbol = (Object*)memory.getBytes(sizeof(Object));
+            tok_len_pair.first.scheme_symbol->type = BOOL;
+            tok_len_pair.first.scheme_symbol->boolean = (tok_len_pair.first.token == TRUE_LITERAL);
+            return tok_len_pair.first;
+        default:
+            index += tok_len_pair.second;
+            return tok_len_pair.first;
+    }
 }
 
 Token Tokenizer::getIdentifierStartingHere() {
@@ -54,7 +62,7 @@ Token Tokenizer::getIdentifierStartingHere() {
 		return getNumber();
 	} else if (c == '-' && isdigit(scheme_string->string[index+1])){
 		return getNumber();
-	} else {
+    } else {
 		return getSymbol();
 	}
 }
@@ -87,18 +95,40 @@ Token Tokenizer::getNumber() {
 
 Token Tokenizer::getSymbol() {
 	int c;
-	std::string buffer;
-	while ((c = scheme_string->string[index]) &&
+    int end_index = index;
+	while ((c = scheme_string->string[end_index]) &&
 			(isalnum(c) || c == '!' || c == '-' || c == '?' || c == '>' || c == '<'
 					|| c == '+' || c == '-' || c == '*' || c == '/')) {
-		++index;
-		buffer.push_back(c);
+		++end_index;
 	}
-	symbol sym = symbol_table.stringToSymbol(buffer.c_str());
+	symbol sym = symbol_table.stringToSymbol(scheme_string->string + index, end_index - index);
 	Object* scheme_obj = (Object*)memory.getBytes(sizeof(Object));
 	scheme_obj->type = SYMBOL;
 	scheme_obj->sym = sym;
+    index = end_index;
 	return Token(scheme_obj, IDENTIFIER);
+}
+
+Token Tokenizer::getStringLiteral() {
+    // precondition: index marks beginning ", so advance index
+    ++index;
+    int c;
+    std::string buffer;
+    while ((c = scheme_string->string[index]) && c != '"') {
+        if (c == '\\') {
+            c = scheme_string->string[++index];
+            if (c == 'n') {
+                c = '\n';
+            }
+            // Otherwise, we'll assume for now that c is " or \, which
+            // should be pushed onto the buffer as is. Eventually,
+            // throw an exception if c is an invalid escape character.
+        }
+        buffer.push_back(c);
+        ++index;
+    }
+    ++index; // skip ending "
+    return Token(memory.getSchemeString(buffer.c_str()), STRING_LITERAL);
 }
 
 void Tokenizer::skipWhiteSpace() {
@@ -124,4 +154,15 @@ std::pair<Token, int> Tokenizer::getPrefixedToken() {
 		}
 	}
 	return std::pair<Token, int>(Token(nullptr, NOTHING), 0);
+}
+
+Reader::Reader(Object* obj, ChunkHeap& heap) :
+    token_stream(Tokenizer(obj, heap)),
+    memory(heap) {}
+
+
+
+Object* Reader::read() {
+    //Object* ret ;//= dispatchRead();
+    return nullptr;
 }

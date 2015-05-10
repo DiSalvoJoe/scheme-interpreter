@@ -25,7 +25,6 @@ enum TOKEN {
 
 	TRUE_LITERAL,
 	FALSE_LITERAL,
-	CHAR_LITERAL,
 	STRING_LITERAL,
 
 	END_TOKEN,
@@ -42,7 +41,7 @@ public:
 
 class Tokenizer {
 public:
-	Tokenizer(Object* scheme_string);
+	Tokenizer(Object* scheme_string, ChunkHeap& heap);
 	Token nextToken();
 
 private:
@@ -58,9 +57,10 @@ private:
 
 	Token getNumber();
 	Token getSymbol();
+    Token getStringLiteral();
 
 	SymbolTable& symbol_table;
-	Memory& memory;
+	ChunkHeap& memory;
 	Object* scheme_string;
 	int index;
 	std::vector<std::pair<std::string, TOKEN>> tokens;
@@ -68,10 +68,14 @@ private:
 
 class Reader {
 public:
+    Reader(Object* obj, ChunkHeap& heap);
 	Object* read();
-
 private:
-	Object* return_reg;
+    //Object* dispatchRead();
+    //Object* readList();
+
+    Tokenizer token_stream;
+    ChunkHeap& memory;
 };
 
 #endif
