@@ -68,14 +68,14 @@ private:
 
 class Reader {
 public:
-    Reader(Object* obj, ChunkHeap& heap);
+    Reader(Object* obj);
 	Object* read();
 private:
     //Object* dispatchRead();
     //Object* readList();
 
+    ChunkHeap memory;
     Tokenizer token_stream;
-    ChunkHeap& memory;
 };
 
 #endif

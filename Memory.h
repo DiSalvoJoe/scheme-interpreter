@@ -12,9 +12,9 @@ class Evaluator;
 
 class Heap {
     public:
-        //virtual ~Heap() = 0;
+        virtual ~Heap() {}
         virtual char* getBytes(size_t bytes) = 0;
-        virtual Object* getSchemeString(const char* str);
+        Object* getSchemeString(const char* str);
 };
 
 class ChunkHeap : public Heap {
@@ -23,7 +23,7 @@ class ChunkHeap : public Heap {
         ~ChunkHeap();
         char* getBytes(size_t bytes);
         void ungetBytes(size_t bytes);
-        //Object* getSchemeString(const char* str);
+
     private:
         static const int chunk_size = 64000; 
 

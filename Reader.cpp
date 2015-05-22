@@ -156,9 +156,10 @@ std::pair<Token, int> Tokenizer::getPrefixedToken() {
 	return std::pair<Token, int>(Token(nullptr, NOTHING), 0);
 }
 
-Reader::Reader(Object* obj, ChunkHeap& heap) :
-    token_stream(Tokenizer(obj, heap)),
-    memory(heap) {}
+Reader::Reader(Object* obj) :
+    memory(ChunkHeap()),
+    token_stream(Tokenizer(obj, memory))
+     {}
 
 
 
