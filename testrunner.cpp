@@ -111,5 +111,36 @@ public:
  void runTest() { suite_ReaderTest.testEmptyList(); }
 } testDescription_suite_ReaderTest_testEmptyList;
 
+static class TestDescription_suite_ReaderTest_testQuoteAtom : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_ReaderTest_testQuoteAtom() : CxxTest::RealTestDescription( Tests_ReaderTest, suiteDescription_ReaderTest, 262, "testQuoteAtom" ) {}
+ void runTest() { suite_ReaderTest.testQuoteAtom(); }
+} testDescription_suite_ReaderTest_testQuoteAtom;
+
+static class TestDescription_suite_ReaderTest_testQuoteList : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_ReaderTest_testQuoteList() : CxxTest::RealTestDescription( Tests_ReaderTest, suiteDescription_ReaderTest, 278, "testQuoteList" ) {}
+ void runTest() { suite_ReaderTest.testQuoteList(); }
+} testDescription_suite_ReaderTest_testQuoteList;
+
+#include "/home/j/prog/scheme_interpreter/scheme interpreter/Evaluator_test.h"
+
+static EvaluatorTest suite_EvaluatorTest;
+
+static CxxTest::List Tests_EvaluatorTest = { 0, 0 };
+CxxTest::StaticSuiteDescription suiteDescription_EvaluatorTest( "Evaluator_test.h", 9, "EvaluatorTest", suite_EvaluatorTest, Tests_EvaluatorTest );
+
+static class TestDescription_suite_EvaluatorTest_testEvalInt : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testEvalInt() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 11, "testEvalInt" ) {}
+ void runTest() { suite_EvaluatorTest.testEvalInt(); }
+} testDescription_suite_EvaluatorTest_testEvalInt;
+
+static class TestDescription_suite_EvaluatorTest_testIfWithInts : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testIfWithInts() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 24, "testIfWithInts" ) {}
+ void runTest() { suite_EvaluatorTest.testIfWithInts(); }
+} testDescription_suite_EvaluatorTest_testIfWithInts;
+
 #include <cxxtest/Root.cpp>
 const char* CxxTest::RealWorldDescription::_worldName = "cxxtest";

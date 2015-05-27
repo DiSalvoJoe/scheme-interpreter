@@ -2,6 +2,8 @@
 #define SCHEMETYPES_H
 
 typedef char* symbol;
+class Environment;
+class Evaluator;
 
 enum MarkStatus {
 	UNMARKED = 0,
@@ -20,6 +22,7 @@ enum Type {
 	CLOSURE = 8,
 	PRIM_PROC = 9,
 	ENVIRONMENT = 10,
+    MACRO = 11
 };
 
 struct Object;
@@ -43,9 +46,25 @@ struct Object {
 	};
 
 };
-
 typedef struct Object Object;
 
+struct Frame;
+typedef struct Frame* (*FrameProcedure)(Evaluator& evaluator);
+struct Frame {
+    Object* to_eval;
+    Object* result;
+    struct Frame* return_frame;
+    Environment* env;
+    FrameProcedure cont;
+    bool receive_return_as_list;
+};
+
+typedef struct Frame Frame;
+
+
+void setFrame(Frame* frame, Object* to_eval, Object* result, Frame* ret, Environment* env, FrameProcedure cont, bool as_list);
 Object* reverseList(Object* obj);
+bool isSelfEvaluating(Object* obj);
+bool asBool(Object* obj);
 
 #endif

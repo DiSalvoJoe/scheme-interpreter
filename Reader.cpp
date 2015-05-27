@@ -202,14 +202,17 @@ Object* Reader::readList() {
     return reverseList(result);
 }
 
-// should read into list, not pair
 Object* Reader::readQuote() {
     SymbolTable& symbol_table = SymbolTable::getSymbolTable();
-    Object* quote = (Object*)memory.getBytes(sizeof(Object));
-    quote->type = CONS;
-    quote->cell.car = (Object*)memory.getBytes(sizeof(Object));
-    quote->cell.car->type = SYMBOL;
-    quote->cell.car->sym = symbol_table.stringToSymbol("quote");
-    quote->cell.cdr = read();
-    return quote;
+    Object* quote_head = (Object*)memory.getBytes(sizeof(Object));
+    Object* quote_tail = (Object*)memory.getBytes(sizeof(Object));
+    quote_head->type = CONS;
+    quote_tail->type = CONS;
+    quote_head->cell.car = (Object*)memory.getBytes(sizeof(Object));
+    quote_head->cell.car->type = SYMBOL;
+    quote_head->cell.car->sym = symbol_table.stringToSymbol("quote");
+    quote_head->cell.cdr = quote_tail;
+    quote_tail->cell.car = read();
+    quote_tail->cell.cdr = nullptr;
+    return quote_head;
 }

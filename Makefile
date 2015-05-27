@@ -1,11 +1,11 @@
 CC=g++
 CFLAGS=-c -Wall -ggdb -I. -std=c++11
 LDFLAGS=
-SOURCES= scheme.cpp Memory.cpp Reader.cpp SchemeTypes.cpp
+SOURCES= scheme.cpp Memory.cpp Reader.cpp SchemeTypes.cpp Evaluator.cpp
 EXECUTABLE=scheme
 
-TESTS = Memory_test.h Reader_test.h
-OBJECTSTEST= Memory.o Reader.o SchemeTypes.o
+TESTS = Memory_test.h Reader_test.h Evaluator_test.h
+OBJECTSTEST= Memory.o Reader.o SchemeTypes.o Evaluator.o
 
 OBJECTS=$(SOURCES:.cpp=.o)
 

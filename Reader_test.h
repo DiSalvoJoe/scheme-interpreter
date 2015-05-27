@@ -259,6 +259,47 @@ public:
         TS_ASSERT_EQUALS(reader.read(), nullptr);
     }
 
+    void testQuoteAtom() {
+        Memory& memory = Memory::getTheMemory();
+		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
+
+        Object* atom = memory.getSchemeString("'atom");
+        // ['quote' | ] -> ['atom' | X]
+        Reader reader(atom);
+        Object* obj = reader.read();
+        TS_ASSERT_EQUALS(obj->type, CONS);
+        TS_ASSERT_EQUALS(obj->cell.car->type, SYMBOL);
+        TS_ASSERT_EQUALS(obj->cell.car->sym, symbol_table.stringToSymbol("quote"));
+        TS_ASSERT_EQUALS(obj->cell.cdr->type, CONS);
+        TS_ASSERT_EQUALS(obj->cell.cdr->cell.car->sym, symbol_table.stringToSymbol("atom"));
+        TS_ASSERT_EQUALS(obj->cell.cdr->cell.cdr, nullptr);
+    }
+
+    void testQuoteList() {
+        Memory& memory = Memory::getTheMemory();
+		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
+
+        Object* list = memory.getSchemeString("'(list 1)");
+        // ['quote' | ] -> [ ['list' | ] -> [1 | X] | X]
+        Reader reader(list);
+        Object* obj = reader.read();
+        TS_ASSERT_EQUALS(obj->type, CONS);
+        TS_ASSERT_EQUALS(obj->cell.car->type, SYMBOL);
+        TS_ASSERT_EQUALS(obj->cell.car->sym, symbol_table.stringToSymbol("quote"));
+        TS_ASSERT_EQUALS(obj->cell.cdr->type, CONS);
+        TS_ASSERT_EQUALS(obj->cell.cdr->cell.cdr, nullptr);
+        Object* quoted_list = obj->cell.cdr->cell.car;
+
+        TS_ASSERT_EQUALS(quoted_list->cell.car->type, SYMBOL);
+        TS_ASSERT_EQUALS(quoted_list->cell.car->sym, symbol_table.stringToSymbol("list"));
+        TS_ASSERT_EQUALS(quoted_list->cell.cdr->type, CONS);
+        TS_ASSERT_EQUALS(quoted_list->cell.cdr->cell.car->type, INT);
+        TS_ASSERT_EQUALS(quoted_list->cell.cdr->cell.car->integer, 1);
+        TS_ASSERT_EQUALS(quoted_list->cell.cdr->cell.cdr, nullptr);
+    }
+
+
+
 
 };
 
