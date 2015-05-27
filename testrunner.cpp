@@ -150,25 +150,25 @@ public:
 
 static class TestDescription_suite_EvaluatorTest_testBegin : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_EvaluatorTest_testBegin() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 57, "testBegin" ) {}
+ TestDescription_suite_EvaluatorTest_testBegin() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 42, "testBegin" ) {}
  void runTest() { suite_EvaluatorTest.testBegin(); }
 } testDescription_suite_EvaluatorTest_testBegin;
 
 static class TestDescription_suite_EvaluatorTest_testLambda : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_EvaluatorTest_testLambda() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 71, "testLambda" ) {}
+ TestDescription_suite_EvaluatorTest_testLambda() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 46, "testLambda" ) {}
  void runTest() { suite_EvaluatorTest.testLambda(); }
 } testDescription_suite_EvaluatorTest_testLambda;
 
 static class TestDescription_suite_EvaluatorTest_testSimpleClosures : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_EvaluatorTest_testSimpleClosures() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 99, "testSimpleClosures" ) {}
+ TestDescription_suite_EvaluatorTest_testSimpleClosures() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 74, "testSimpleClosures" ) {}
  void runTest() { suite_EvaluatorTest.testSimpleClosures(); }
 } testDescription_suite_EvaluatorTest_testSimpleClosures;
 
 static class TestDescription_suite_EvaluatorTest_testClosureWithCapturedVariable : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_EvaluatorTest_testClosureWithCapturedVariable() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 119, "testClosureWithCapturedVariable" ) {}
+ TestDescription_suite_EvaluatorTest_testClosureWithCapturedVariable() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 79, "testClosureWithCapturedVariable" ) {}
  void runTest() { suite_EvaluatorTest.testClosureWithCapturedVariable(); }
 } testDescription_suite_EvaluatorTest_testClosureWithCapturedVariable;
 

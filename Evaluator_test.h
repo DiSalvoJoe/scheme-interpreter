@@ -22,50 +22,25 @@ public:
     }
 
     void testIfWithInts() {
-        doTestIntIf("(if #f 1 2)", 2);
-        doTestIntIf("(if #t 1 2)", 1);
-        doTestIntIf("(if 1 2 3)", 2);
-        doTestIntIf("(if #f 1 2)", 2);
-        doTestIntIf("(if \"hello\" 1 2)", 1);
-        doTestIntIf("(if 125.2 1 2)", 1);
-        doTestIntIf("(if (if #f #f #t) 1 2)", 1);
-        doTestIntIf("(if (if #f #t #f) 1 2)", 2);
-        doTestIntIf("(if 1 (if #f 3 4) 2)", 4);
-        doTestIntIf("(if 1 2 (if #f 3 4))", 2);
+        assertEvalsTo("(if #f 1 2)", "2");
+        assertEvalsTo("(if #t 1 2)", "1");
+        assertEvalsTo("(if 1 2 3)", "2");
+        assertEvalsTo("(if #f 1 2)", "2");
+        assertEvalsTo("(if \"hello\" 1 2)", "1");
+        assertEvalsTo("(if 125.2 1 2)", "1");
+        assertEvalsTo("(if (if #f #f #t) 1 2)", "1");
+        assertEvalsTo("(if (if #f #t #f) 1 2)", "2");
+        assertEvalsTo("(if 1 (if #f 3 4) 2)", "4");
+        assertEvalsTo("(if 1 2 (if #f 3 4))", "2");
     }
 
     void testDefine() {
-        Memory& memory = Memory::getTheMemory();
-		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
-        Evaluator evaluator;
-        Environment env;
-
-        Object* obj = memory.getSchemeString("(define test (if 1 2 3)) test");
-        Reader reader(obj);
-
-        // eval (define test (if 1 2 3))
-        Object* evalled = evaluator.eval(reader.read(), &env);
-        TS_ASSERT_EQUALS(evalled->type, INT);
-        TS_ASSERT_EQUALS(evalled->integer, 2);
-
-        // eval test
-        evalled = evaluator.eval(reader.read(), &env);
-        TS_ASSERT_EQUALS(evalled->type, INT);
-        TS_ASSERT_EQUALS(evalled->integer, 2);
+        assertEvalsTo("(begin (define test (if 1 2 3)) test)", "2");
+        assertEvalsTo("(define a 1)", "1");
     }
 
     void testBegin() {
-        Memory& memory = Memory::getTheMemory();
-		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
-        Evaluator evaluator;
-        Environment env;
-
-        Object* obj = memory.getSchemeString("(begin (define a (if 1 #f 3)) (if a 5 6))");
-        Reader reader(obj);
-
-        Object* evalled = evaluator.eval(reader.read(), &env);
-        TS_ASSERT_EQUALS(evalled->type, INT);
-        TS_ASSERT_EQUALS(evalled->integer, 6);
+        assertEvalsTo("(begin (define a (if 1 #f 3)) (if a 5 6))", "6");
     }
 
     void testLambda() {
@@ -97,52 +72,28 @@ public:
 
 
     void testSimpleClosures() {
-        Memory& memory = Memory::getTheMemory();
-		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
-        Evaluator evaluator;
-        Environment env;
-        const char str[] = "(begin (define id (lambda (x) x)) (id 5))";
-        const char str2[] = "(begin (define to-bool (lambda (x) (if x #t #f))) (to-bool 7))";
-        Object* obj = memory.getSchemeString(str);
-        Reader reader(obj);
-        Object* evalled = evaluator.eval(reader.read(), &env);
-        TS_ASSERT_EQUALS(evalled->type, INT);
-        TS_ASSERT_EQUALS(evalled->integer, 5);
-
-        obj = memory.getSchemeString(str2);
-        Reader reader2(obj);
-        evalled = evaluator.eval(reader2.read(), &env);
-        TS_ASSERT_EQUALS(evalled->type, BOOL);
-        TS_ASSERT_EQUALS(evalled->boolean, true);
+        assertEvalsTo("(begin (define id (lambda (x) x)) (id 5))", "5");
+        assertEvalsTo("(begin (define to-bool (lambda (x) (if x #t #f))) (to-bool 7))", "#t");
     }
 
     void testClosureWithCapturedVariable() {
-        Memory& memory = Memory::getTheMemory();
-		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
-        Evaluator evaluator;
-        Environment env;
-
-        const char str[] = "(begin (define make-if (lambda (p) (lambda (c) (if p c 0)))) ((make-if 1) 2))";
-        Object* obj = memory.getSchemeString(str);
-        Reader reader(obj);
-
-        Object* evalled = evaluator.eval(reader.read(), &env);
-        TS_ASSERT_EQUALS(evalled->type, INT);
-        TS_ASSERT_EQUALS(evalled->integer, 2);
+        assertEvalsTo("(begin (define make-if (lambda (p) (lambda (c) (if p c 0)))) ((make-if 1) 2))", "2");
     }
 
 
 
 private:
-    void doTestIntIf(const char* if_str, int result) {
+    void assertEvalsTo(const char* lhs, const char* result) {
         Memory& memory = Memory::getTheMemory();
         Evaluator evaluator;
+        Environment env;
 
-        Object* obj = memory.getSchemeString(if_str);
-        Reader reader(obj);
-        Object* evalled = evaluator.eval(reader.read(), nullptr);
-        TS_ASSERT_EQUALS(evalled->type, INT);
-        TS_ASSERT_EQUALS(evalled->integer, result);
+        Object* left = memory.getSchemeString(lhs);
+        Reader left_reader(left);
+        Object* right = memory.getSchemeString(result);
+        Reader right_reader(right);
+
+        TS_ASSERT(equal(evaluator.eval(left_reader.read(), &env), right_reader.read()));
     }
 
 

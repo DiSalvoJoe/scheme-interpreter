@@ -154,6 +154,8 @@ void applyClosure(Evaluator& evaluator) {
     new_env->enclosing_env = top->env;
 
     // bind the parameters to the evaluated arguments
+    // when I change the Environments to use scheme association lists, this next bit
+    // will have to change, since binding with an assoc list might trigger GC.
     Object* params = closure->parameters;
     while (params && args) {
         symbol identifier = params->cell.car->sym;

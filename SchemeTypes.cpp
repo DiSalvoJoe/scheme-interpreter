@@ -72,7 +72,7 @@ bool asBool(Object* obj) {
 
 bool equal(Object* left, Object* right) {
     if (!left || !right) {
-        return !right && !left;
+        return left == right;
     } else if (left->type != right->type) {
         return false;
     } else {
