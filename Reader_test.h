@@ -1,6 +1,8 @@
 #include <cxxtest/TestSuite.h>
 #include <iostream>
+
 #include "Reader.h"
+#include "SchemeTypes.h"
 #include "Memory.h"
 
 class TokenizerTest : public CxxTest::TestSuite {
@@ -192,4 +194,71 @@ private:
 
 };
 
+class ReaderTest : public CxxTest::TestSuite {
+public:
+    void testReadLiteral() {
+        Memory& memory = Memory::getTheMemory();
+		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
+
+        Object* float_lit = memory.getSchemeString("153.63");
+        Object* int_lit = memory.getSchemeString("153");
+        Object* bool_lit = memory.getSchemeString("#t");
+        Object* sym = memory.getSchemeString("define");
+
+        Reader float_reader(float_lit);
+        Reader int_reader(int_lit);
+        Reader bool_reader(bool_lit);
+        Reader sym_reader(sym);
+
+        Object* floatr = float_reader.read();
+        Object* intr = int_reader.read();
+        Object* boolr = bool_reader.read();
+        Object* symr = sym_reader.read();
+
+        TS_ASSERT_DELTA(floatr->floatN, 153.63, 0.001);
+        TS_ASSERT_EQUALS(intr->integer, 153);
+        TS_ASSERT_EQUALS(boolr->boolean, true);
+        TS_ASSERT_EQUALS(symr->sym, symbol_table.stringToSymbol("define"));
+
+        TS_ASSERT_EQUALS(float_reader.read(), nullptr);
+        TS_ASSERT_EQUALS(float_reader.read(), nullptr);
+    }
+
+    void testFlatList() {
+        Memory& memory = Memory::getTheMemory();
+		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
+
+        Object* list = memory.getSchemeString("(+ 1 2)");
+        Reader reader(list);
+
+        Object* result = reader.read();
+        TS_ASSERT_EQUALS(result->type, CONS);
+        TS_ASSERT_EQUALS(result->cell.car->type, SYMBOL);
+        TS_ASSERT_EQUALS(result->cell.car->sym, symbol_table.stringToSymbol("+"));
+
+        result = result->cell.cdr;
+        TS_ASSERT_EQUALS(result->type, CONS);
+        TS_ASSERT_EQUALS(result->cell.car->type, INT);
+        TS_ASSERT_EQUALS(result->cell.car->integer, 1);
+
+        result = result->cell.cdr;
+        TS_ASSERT_EQUALS(result->type, CONS);
+        TS_ASSERT_EQUALS(result->cell.car->type, INT);
+        TS_ASSERT_EQUALS(result->cell.car->integer, 2);
+
+        result = result->cell.cdr;
+        TS_ASSERT_EQUALS(result, nullptr);
+    }
+
+    void testEmptyList() {
+        Memory& memory = Memory::getTheMemory();
+		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
+
+        Object* list = memory.getSchemeString("()");
+        Reader reader(list);
+        TS_ASSERT_EQUALS(reader.read(), nullptr);
+    }
+
+
+};
 

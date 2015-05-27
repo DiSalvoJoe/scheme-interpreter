@@ -20,7 +20,7 @@ int main( int argc, char *argv[] ) {
     return status;
 }
 bool suite_SymbolTableTest_init = false;
-#include "/home/j/prog/scheme-interpreter/Memory_test.h"
+#include "/home/j/prog/scheme_interpreter/scheme interpreter/Memory_test.h"
 
 static SymbolTableTest suite_SymbolTableTest;
 
@@ -45,48 +45,71 @@ public:
  void runTest() { suite_SymbolTableTest.testStringToSymbolZeroLengthOrNull(); }
 } testDescription_suite_SymbolTableTest_testStringToSymbolZeroLengthOrNull;
 
-#include "/home/j/prog/scheme-interpreter/Reader_test.h"
+#include "/home/j/prog/scheme_interpreter/scheme interpreter/Reader_test.h"
 
 static TokenizerTest suite_TokenizerTest;
 
 static CxxTest::List Tests_TokenizerTest = { 0, 0 };
-CxxTest::StaticSuiteDescription suiteDescription_TokenizerTest( "Reader_test.h", 6, "TokenizerTest", suite_TokenizerTest, Tests_TokenizerTest );
+CxxTest::StaticSuiteDescription suiteDescription_TokenizerTest( "Reader_test.h", 8, "TokenizerTest", suite_TokenizerTest, Tests_TokenizerTest );
 
 static class TestDescription_suite_TokenizerTest_testRealisticExample : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_TokenizerTest_testRealisticExample() : CxxTest::RealTestDescription( Tests_TokenizerTest, suiteDescription_TokenizerTest, 8, "testRealisticExample" ) {}
+ TestDescription_suite_TokenizerTest_testRealisticExample() : CxxTest::RealTestDescription( Tests_TokenizerTest, suiteDescription_TokenizerTest, 10, "testRealisticExample" ) {}
  void runTest() { suite_TokenizerTest.testRealisticExample(); }
 } testDescription_suite_TokenizerTest_testRealisticExample;
 
 static class TestDescription_suite_TokenizerTest_testNumbers : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_TokenizerTest_testNumbers() : CxxTest::RealTestDescription( Tests_TokenizerTest, suiteDescription_TokenizerTest, 61, "testNumbers" ) {}
+ TestDescription_suite_TokenizerTest_testNumbers() : CxxTest::RealTestDescription( Tests_TokenizerTest, suiteDescription_TokenizerTest, 63, "testNumbers" ) {}
  void runTest() { suite_TokenizerTest.testNumbers(); }
 } testDescription_suite_TokenizerTest_testNumbers;
 
 static class TestDescription_suite_TokenizerTest_testEmptyStringAndSpaces : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_TokenizerTest_testEmptyStringAndSpaces() : CxxTest::RealTestDescription( Tests_TokenizerTest, suiteDescription_TokenizerTest, 87, "testEmptyStringAndSpaces" ) {}
+ TestDescription_suite_TokenizerTest_testEmptyStringAndSpaces() : CxxTest::RealTestDescription( Tests_TokenizerTest, suiteDescription_TokenizerTest, 89, "testEmptyStringAndSpaces" ) {}
  void runTest() { suite_TokenizerTest.testEmptyStringAndSpaces(); }
 } testDescription_suite_TokenizerTest_testEmptyStringAndSpaces;
 
 static class TestDescription_suite_TokenizerTest_testNumsAndIdentifiers : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_TokenizerTest_testNumsAndIdentifiers() : CxxTest::RealTestDescription( Tests_TokenizerTest, suiteDescription_TokenizerTest, 105, "testNumsAndIdentifiers" ) {}
+ TestDescription_suite_TokenizerTest_testNumsAndIdentifiers() : CxxTest::RealTestDescription( Tests_TokenizerTest, suiteDescription_TokenizerTest, 107, "testNumsAndIdentifiers" ) {}
  void runTest() { suite_TokenizerTest.testNumsAndIdentifiers(); }
 } testDescription_suite_TokenizerTest_testNumsAndIdentifiers;
 
 static class TestDescription_suite_TokenizerTest_testStringLiteral : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_TokenizerTest_testStringLiteral() : CxxTest::RealTestDescription( Tests_TokenizerTest, suiteDescription_TokenizerTest, 123, "testStringLiteral" ) {}
+ TestDescription_suite_TokenizerTest_testStringLiteral() : CxxTest::RealTestDescription( Tests_TokenizerTest, suiteDescription_TokenizerTest, 125, "testStringLiteral" ) {}
  void runTest() { suite_TokenizerTest.testStringLiteral(); }
 } testDescription_suite_TokenizerTest_testStringLiteral;
 
 static class TestDescription_suite_TokenizerTest_testBoolLiterals : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_TokenizerTest_testBoolLiterals() : CxxTest::RealTestDescription( Tests_TokenizerTest, suiteDescription_TokenizerTest, 134, "testBoolLiterals" ) {}
+ TestDescription_suite_TokenizerTest_testBoolLiterals() : CxxTest::RealTestDescription( Tests_TokenizerTest, suiteDescription_TokenizerTest, 136, "testBoolLiterals" ) {}
  void runTest() { suite_TokenizerTest.testBoolLiterals(); }
 } testDescription_suite_TokenizerTest_testBoolLiterals;
+
+static ReaderTest suite_ReaderTest;
+
+static CxxTest::List Tests_ReaderTest = { 0, 0 };
+CxxTest::StaticSuiteDescription suiteDescription_ReaderTest( "Reader_test.h", 197, "ReaderTest", suite_ReaderTest, Tests_ReaderTest );
+
+static class TestDescription_suite_ReaderTest_testReadLiteral : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_ReaderTest_testReadLiteral() : CxxTest::RealTestDescription( Tests_ReaderTest, suiteDescription_ReaderTest, 199, "testReadLiteral" ) {}
+ void runTest() { suite_ReaderTest.testReadLiteral(); }
+} testDescription_suite_ReaderTest_testReadLiteral;
+
+static class TestDescription_suite_ReaderTest_testFlatList : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_ReaderTest_testFlatList() : CxxTest::RealTestDescription( Tests_ReaderTest, suiteDescription_ReaderTest, 227, "testFlatList" ) {}
+ void runTest() { suite_ReaderTest.testFlatList(); }
+} testDescription_suite_ReaderTest_testFlatList;
+
+static class TestDescription_suite_ReaderTest_testEmptyList : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_ReaderTest_testEmptyList() : CxxTest::RealTestDescription( Tests_ReaderTest, suiteDescription_ReaderTest, 253, "testEmptyList" ) {}
+ void runTest() { suite_ReaderTest.testEmptyList(); }
+} testDescription_suite_ReaderTest_testEmptyList;
 
 #include <cxxtest/Root.cpp>
 const char* CxxTest::RealWorldDescription::_worldName = "cxxtest";

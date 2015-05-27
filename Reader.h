@@ -71,8 +71,8 @@ public:
     Reader(Object* obj);
 	Object* read();
 private:
-    //Object* dispatchRead();
-    //Object* readList();
+    Object* readList();
+    Object* readQuote();
 
     ChunkHeap memory;
     Tokenizer token_stream;

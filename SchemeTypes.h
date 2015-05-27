@@ -22,6 +22,13 @@ enum Type {
 	ENVIRONMENT = 10,
 };
 
+struct Object;
+
+typedef struct {
+    Object* car;
+    Object* cdr;
+} ConsCell;
+
 struct Object {
 	MarkStatus marked : 1;
 	Type type : 4;
@@ -32,10 +39,13 @@ struct Object {
 		bool boolean;
 		char* string;
 		symbol sym;
+        ConsCell cell;
 	};
 
 };
 
 typedef struct Object Object;
+
+Object* reverseList(Object* obj);
 
 #endif

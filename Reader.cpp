@@ -1,6 +1,8 @@
 #include <cctype>
-#include "Reader.h"
 #include <string>
+
+#include "Reader.h"
+#include "SchemeTypes.h"
 
 Tokenizer::Tokenizer(Object* scheme_string, ChunkHeap& heap) :
 	symbol_table(SymbolTable::getSymbolTable()),
@@ -163,7 +165,51 @@ Reader::Reader(Object* obj) :
 
 
 
+     // Need to copy the object into the primary memory
 Object* Reader::read() {
-    //Object* ret ;//= dispatchRead();
-    return nullptr;
+    Token tok = token_stream.nextToken();
+    Object* result = nullptr;
+    switch(tok.token) {
+        case LIST_BEGIN:
+            result = readList();
+            break;
+        case QUOTE:
+            result = readQuote();
+            break;
+        case LIST_END:
+            break;
+        case END_TOKEN:
+            break;
+        case NOTHING:
+            break;
+        default:
+            result = tok.scheme_symbol;
+    }
+    // COPY THE RESULT INTO PRIMARY MEMORY
+    return result;
+}
+
+Object* Reader::readList() {
+    Object* result = nullptr;
+    Object* element = nullptr;
+    while ((element = read())) {
+        Object* link = (Object*)memory.getBytes(sizeof(Object));
+        link->type = CONS;
+        link->cell.cdr = result;
+        link->cell.car = element;
+        result = link;
+    }
+    return reverseList(result);
+}
+
+// should read into list, not pair
+Object* Reader::readQuote() {
+    SymbolTable& symbol_table = SymbolTable::getSymbolTable();
+    Object* quote = (Object*)memory.getBytes(sizeof(Object));
+    quote->type = CONS;
+    quote->cell.car = (Object*)memory.getBytes(sizeof(Object));
+    quote->cell.car->type = SYMBOL;
+    quote->cell.car->sym = symbol_table.stringToSymbol("quote");
+    quote->cell.cdr = read();
+    return quote;
 }
