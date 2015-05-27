@@ -142,5 +142,35 @@ public:
  void runTest() { suite_EvaluatorTest.testIfWithInts(); }
 } testDescription_suite_EvaluatorTest_testIfWithInts;
 
+static class TestDescription_suite_EvaluatorTest_testDefine : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testDefine() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 37, "testDefine" ) {}
+ void runTest() { suite_EvaluatorTest.testDefine(); }
+} testDescription_suite_EvaluatorTest_testDefine;
+
+static class TestDescription_suite_EvaluatorTest_testBegin : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testBegin() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 57, "testBegin" ) {}
+ void runTest() { suite_EvaluatorTest.testBegin(); }
+} testDescription_suite_EvaluatorTest_testBegin;
+
+static class TestDescription_suite_EvaluatorTest_testLambda : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testLambda() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 71, "testLambda" ) {}
+ void runTest() { suite_EvaluatorTest.testLambda(); }
+} testDescription_suite_EvaluatorTest_testLambda;
+
+static class TestDescription_suite_EvaluatorTest_testSimpleClosures : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testSimpleClosures() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 99, "testSimpleClosures" ) {}
+ void runTest() { suite_EvaluatorTest.testSimpleClosures(); }
+} testDescription_suite_EvaluatorTest_testSimpleClosures;
+
+static class TestDescription_suite_EvaluatorTest_testClosureWithCapturedVariable : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testClosureWithCapturedVariable() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 119, "testClosureWithCapturedVariable" ) {}
+ void runTest() { suite_EvaluatorTest.testClosureWithCapturedVariable(); }
+} testDescription_suite_EvaluatorTest_testClosureWithCapturedVariable;
+
 #include <cxxtest/Root.cpp>
 const char* CxxTest::RealWorldDescription::_worldName = "cxxtest";

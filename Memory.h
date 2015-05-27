@@ -17,18 +17,6 @@ class Heap {
         Object* getSchemeString(const char* str);
 };
 
-template <class Mem>
-Frame* getFrame(Mem& memory, Object* to_eval, Object* result, Frame* ret, Environment* env, FrameProcedure cont, bool as_list) {
-    Frame* frame = (Frame*)memory.getBytes(sizeof(Frame));
-    frame->to_eval = to_eval;
-    frame->result = result;
-    frame->return_frame = ret;
-    frame->env = env;
-    frame->cont = cont;
-    frame->receive_return_as_list = as_list;
-    return frame;
-}
-
 class ChunkHeap : public Heap {
     public:
         ChunkHeap();
@@ -69,7 +57,7 @@ private:
     void switchHeaps();
 
     constexpr static const double scale = 2.0; // factor to expand heap by
-    static const int initial_heap_size = 10000; 
+    static const int initial_heap_size = 100000;
 
     enum {GROW, SHRINK, STAY} grow_heap;
     int heap_size;

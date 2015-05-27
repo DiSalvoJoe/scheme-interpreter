@@ -18,8 +18,11 @@ public:
     Memory& memory;
     SymbolTable& symbol_table;
     const symbol define_sym;
+    const symbol set_sym;
     const symbol if_sym;
     const symbol quote_sym;
+    const symbol lambda_sym;
+    const symbol begin_sym;
 };
 
 #endif

@@ -1,6 +1,9 @@
 #ifndef SCHEMETYPES_H
 #define SCHEMETYPES_H
 
+#include <map>
+#include <cstring>
+
 typedef char* symbol;
 class Environment;
 class Evaluator;
@@ -32,6 +35,12 @@ typedef struct {
     Object* cdr;
 } ConsCell;
 
+typedef struct {
+    Object* parameters;
+    Object* body;
+    Environment* env;
+} Closure;
+
 struct Object {
 	MarkStatus marked : 1;
 	Type type : 4;
@@ -43,13 +52,15 @@ struct Object {
 		char* string;
 		symbol sym;
         ConsCell cell;
+        Closure* closure;
 	};
 
 };
+
 typedef struct Object Object;
 
 struct Frame;
-typedef struct Frame* (*FrameProcedure)(Evaluator& evaluator);
+typedef void (*FrameProcedure)(Evaluator& evaluator);
 struct Frame {
     Object* to_eval;
     Object* result;
@@ -66,5 +77,32 @@ void setFrame(Frame* frame, Object* to_eval, Object* result, Frame* ret, Environ
 Object* reverseList(Object* obj);
 bool isSelfEvaluating(Object* obj);
 bool asBool(Object* obj);
+bool equal(Object* left, Object* right);
+
+class Environment {
+public:
+    void* operator new(size_t);
+    void operator delete(void* p);
+    Environment();
+    ~Environment() {}
+
+    void bind(symbol identifier, Object* rvalue);
+
+    Object* lookup(symbol identifier);
+
+    Environment* enclosing_env;
+
+private:
+	struct cmp_str  {
+		bool operator()(char const *a, char const *b) {
+			return std::strcmp(a, b) < 0;
+		}
+	};
+
+    // I think this will leak memory, because environments are never properly destroyed.
+    // A large chunk of memory which contains an std::map header is destroyed instead.
+    // Change this to be a scheme association list?
+	std::map<symbol, Object*, cmp_str> table;
+};
 
 #endif
