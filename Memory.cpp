@@ -2,6 +2,7 @@
 #include <map>
 #include <cstring>
 #include <cstdlib>
+#include <iostream>
 
 Object* Heap::getSchemeString(const char* str) {
     int str_len = strlen(str);
@@ -73,6 +74,7 @@ Memory::Memory() {
 }
 
 void Memory::garbageCollect(size_t ensure_bytes) {
+    std::cout << "Starting garbage collection." << std::endl;
 	switchHeaps();
 	// Start with, Evaluator
 }

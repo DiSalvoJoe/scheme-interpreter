@@ -167,16 +167,13 @@ void EvaluationProcedure::applyClosure(Evaluator& evaluator) {
 
 void EvaluationProcedure::lambdaToClosure(Evaluator& evaluator) {
     // get a closure and a wrapper (object) to put it in, return it.
-    Object* closure_obj = (Object*)evaluator.memory.getBytes(sizeof(Object)+sizeof(Closure));
-    Closure* closure = (Closure*)(closure_obj+sizeof(Object));
-    closure_obj->type = CLOSURE;
-    closure_obj->closure = closure;
-    closure_obj->marked = UNMARKED;
-    closure->env = evaluator.top_frame->env;
+    Object* closure_obj = getClosure(evaluator.memory);
+    closure_obj->closure->env = evaluator.top_frame->env;
     Object* list = evaluator.top_frame->to_eval;
-    closure->parameters = list->cell.car;
-    closure->body = list->cell.cdr;
+    closure_obj->closure->parameters = list->cell.car;
+    closure_obj->closure->body = list->cell.cdr;
     evaluator.top_frame->result = closure_obj;
+    evaluator.top_frame->to_eval = nullptr;
     evaluator.sendReturn();
 }
 
@@ -186,10 +183,12 @@ void EvaluationProcedure::dispatchEval(Evaluator& evaluator) {
     if (isSelfEvaluating(to_eval)) {
         frame->result = to_eval;
         evaluator.sendReturn();
+        return;
     } else {
         if (to_eval->type == SYMBOL) {
             frame->result = frame->env->lookup(to_eval->sym);
             evaluator.sendReturn();
+            return;
         } 
         
         // this should be the case
@@ -199,35 +198,35 @@ void EvaluationProcedure::dispatchEval(Evaluator& evaluator) {
             if (car == evaluator.quote_sym) {
                 frame->result = to_eval->cell.cdr->cell.car;
                 evaluator.sendReturn();
+                return;
             }
 
             else if (car == evaluator.if_sym) {
-                frame->receive_return_as_list = false;
                 frame->cont = &EvaluationProcedure::beginIf;
                 frame->to_eval = to_eval->cell.cdr;
+                return;
             }
 
             else if (car == evaluator.define_sym || car == evaluator.set_sym) {
-                frame->receive_return_as_list = false;
                 frame->cont = &EvaluationProcedure::beginBind;
                 frame->to_eval = to_eval->cell.cdr;
+                return;
             }
 
             else if (car == evaluator.begin_sym) {
-                frame->receive_return_as_list = false;
                 frame->cont = &EvaluationProcedure::evalSequence;
                 frame->to_eval = to_eval->cell.cdr;
+                return;
             }
 
             else if (car == evaluator.lambda_sym) {
-                frame->receive_return_as_list = false;
                 frame->cont = &EvaluationProcedure::lambdaToClosure;
                 frame->to_eval = to_eval->cell.cdr;
+                return;
             }
 
             // applying a procedure to an object.
             else {
-                frame->receive_return_as_list = false;
                 frame->cont = &EvaluationProcedure::beginApply;
             }
         }
@@ -244,8 +243,18 @@ Evaluator::Evaluator() :
     lambda_sym(symbol_table.stringToSymbol("lambda")),
     begin_sym(symbol_table.stringToSymbol("begin"))
 {
-    final_frame = getFrame(this->memory);
-    top_frame = getFrame(this->memory);
+    final_frame = getFrame(memory);
+    top_frame = getFrame(memory);
+}
+
+Evaluator& Evaluator::getEvaluator() {
+    static Evaluator evaluator;
+    return evaluator;
+}
+
+void Evaluator::reinitialize() {
+    final_frame = getFrame(memory);
+    top_frame = getFrame(memory);
 }
 
 
@@ -258,7 +267,7 @@ Object* Evaluator::eval(Object* obj, Environment* env) {
     }
 
     Object* result = final_frame->result;
-    setFrame(final_frame, nullptr, nullptr, nullptr, nullptr, nullptr, false);
-    setFrame(top_frame, nullptr, nullptr, nullptr, nullptr, nullptr, false);
+    top_frame = nullptr;
+    final_frame = nullptr;
     return result;
 }

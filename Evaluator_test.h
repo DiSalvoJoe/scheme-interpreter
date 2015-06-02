@@ -11,11 +11,12 @@ public:
     void testEvalInt() {
         Memory& memory = Memory::getTheMemory();
 		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
-        Evaluator evaluator;
+        Evaluator& evaluator = Evaluator::getEvaluator();
 
         Object* obj = memory.getSchemeString("124");
         Reader reader(obj);
 
+        evaluator.reinitialize();
         Object* evalled = evaluator.eval(reader.read(), nullptr);
         TS_ASSERT_EQUALS(evalled->type, INT);
         TS_ASSERT_EQUALS(evalled->integer, 124);
@@ -46,14 +47,18 @@ public:
     void testLambda() {
         Memory& memory = Memory::getTheMemory();
 		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
-        Evaluator evaluator;
+        Evaluator& evaluator = Evaluator::getEvaluator();
         Environment env;
 
         Object* obj = memory.getSchemeString("(lambda (x) x) (lambda (x y z) (+ 1 2) 5) (x) (x y z) ((+ 1 2) 5)");
         Reader reader(obj);
 
+        evaluator.reinitialize();
         Object* identity_closure = evaluator.eval(reader.read(), &env);
+        Object* old_body = identity_closure->closure->body;
+        evaluator.reinitialize();
         Object* add_then_5 = evaluator.eval(reader.read(), &env);
+        evaluator.reinitialize();
         Object* x_list = reader.read();
         Object* xyz_list = reader.read();
         Object* plus12_list = reader.read();
@@ -80,12 +85,10 @@ public:
         assertEvalsTo("(begin (define make-if (lambda (p) (lambda (c) (if p c 0)))) ((make-if 1) 2))", "2");
     }
 
-
-
 private:
     void assertEvalsTo(const char* lhs, const char* result) {
         Memory& memory = Memory::getTheMemory();
-        Evaluator evaluator;
+        Evaluator& evaluator = Evaluator::getEvaluator();
         Environment env;
 
         Object* left = memory.getSchemeString(lhs);
@@ -93,6 +96,7 @@ private:
         Object* right = memory.getSchemeString(result);
         Reader right_reader(right);
 
+        evaluator.reinitialize();
         TS_ASSERT(equal(evaluator.eval(left_reader.read(), &env), right_reader.read()));
     }
 

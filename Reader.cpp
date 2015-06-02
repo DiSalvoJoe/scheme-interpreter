@@ -163,8 +163,12 @@ Reader::Reader(Object* obj) :
 
 
 
-     // Need to copy the object into the primary memory
 Object* Reader::read() {
+    //return dispatchRead();
+    return copy(dispatchRead());
+}
+
+Object* Reader::dispatchRead() {
     Token tok = token_stream.nextToken();
     Object* result = nullptr;
     switch(tok.token) {
@@ -183,14 +187,13 @@ Object* Reader::read() {
         default:
             result = tok.scheme_symbol;
     }
-    // COPY THE RESULT INTO PRIMARY MEMORY
     return result;
 }
 
 Object* Reader::readList() {
     Object* result = nullptr;
     Object* element = nullptr;
-    while ((element = read())) {
+    while ((element = dispatchRead())) {
         Object* link = getObject(memory, CONS);
         link->cell.cdr = result;
         link->cell.car = element;
@@ -206,7 +209,7 @@ Object* Reader::readQuote() {
     quote_head->cell.car = getObject(memory, SYMBOL);
     quote_head->cell.car->sym = symbol_table.stringToSymbol("quote");
     quote_head->cell.cdr = quote_tail;
-    quote_tail->cell.car = read();
+    quote_tail->cell.car = dispatchRead();
     quote_tail->cell.cdr = nullptr;
     return quote_head;
 }

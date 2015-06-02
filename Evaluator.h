@@ -21,11 +21,14 @@ public:
 
 class Evaluator {
 public:
-    Evaluator();
+    static Evaluator& getEvaluator();
     ~Evaluator() {}
     Object* eval(Object* obj, Environment* env);
+    void reinitialize();
 
 private:
+    Evaluator();
+
     void sendReturn();
 
     Frame* final_frame;

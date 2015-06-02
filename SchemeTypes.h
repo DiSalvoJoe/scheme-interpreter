@@ -26,8 +26,7 @@ enum Type {
 	CONTINUATION = 7,
 	CLOSURE = 8,
 	PRIM_PROC = 9,
-	ENVIRONMENT = 10,
-    MACRO = 11
+    MACRO = 10
 };
 
 struct Object;
@@ -81,6 +80,7 @@ bool isSelfEvaluating(Object* obj);
 bool asBool(Object* obj);
 bool equal(Object* left, Object* right);
 size_t size(Object* list);
+Object* copy(Object* obj);
 
 class Environment {
 public:

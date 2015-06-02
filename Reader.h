@@ -71,9 +71,13 @@ public:
     Reader(Object* obj);
 	Object* read();
 private:
+    Object* dispatchRead();
     Object* readList();
     Object* readQuote();
 
+    // No garbage is generated during reading, so there is no sense in using the primary memory
+    // (that would require using a stack instead of recursion.)
+    // After the object is constructed, it will be copied into the primary memory.
     ChunkHeap memory;
     Tokenizer token_stream;
 };

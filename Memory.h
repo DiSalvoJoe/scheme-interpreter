@@ -32,6 +32,20 @@ inline Frame* getFrame(Mem& memory) {
     return frame;
 }
 
+template <class Mem>
+inline Object* getClosure(Mem& memory) {
+    // If you do wrapper = (Object*)memory.getBytes ....
+    // then get the closure by adding to wrapper, the wrapper address is offset
+    // by sizeof(Object)*sizeof(Object) by pointer arithmetic.
+    char* bytes= memory.getBytes(sizeof(Object)+sizeof(Closure));
+    Object* wrapper = (Object*)bytes;
+    Closure* cl = (Closure*)(bytes+ sizeof(Object));
+    wrapper->type = CLOSURE;
+    wrapper->marked = UNMARKED;
+    wrapper->closure = cl;
+    return wrapper;
+}
+
 class ChunkHeap : public Heap {
     public:
         ChunkHeap();
@@ -72,7 +86,7 @@ private:
     void switchHeaps();
 
     constexpr static const double scale = 2.0; // factor to expand heap by
-    static const int initial_heap_size = 100000;
+    static const int initial_heap_size = 1000000;
 
     enum {GROW, SHRINK, STAY} grow_heap;
     int heap_size;

@@ -113,6 +113,92 @@ size_t size(Object* obj) {
     }
 }
 
+Environment* copyEnv(Environment* env);
+
+Object* copy(Object* obj) {
+    if (!obj ) {
+        return obj;
+    }
+
+    Memory& memory = Memory::getTheMemory();
+    Object* result = nullptr;
+    Object* temp = nullptr;
+    int len = 0;
+    switch (obj->type) {
+        case INT:
+            result = getObject(memory, obj->type);
+            result->integer = obj->integer;
+            return result;
+        case FLOAT:
+            result = getObject(memory, obj->type);
+            result->floatN = obj->floatN;
+            return result;
+        case CHAR:
+            result = getObject(memory, obj->type);
+            result->character = obj->character;
+            return result;
+        case BOOL:
+            result = getObject(memory, obj->type);
+            result->boolean = obj->boolean;
+            return result;
+        case STRING:
+            if (obj->marked == FORWARDED) {
+                return obj->cell.car; 
+            }
+            result = getObject(memory, obj->type);
+            len = strlen(obj->string)+1;
+            result->string = memory.getBytes(len);
+            result->string[len-1] = '\0';
+            strcpy(result->string, obj->string);
+            obj->cell.car= result;
+            obj->marked = FORWARDED;
+            return result;
+        case SYMBOL:
+            result = getObject(memory, SYMBOL);
+            result->sym = obj->sym;
+            return result;
+        case CONS:
+            if (obj->marked == FORWARDED) {
+                std::cout << "FORWARDED CONS!" << std::endl;
+                return obj->cell.car; 
+            }
+            result = getObject(memory, CONS);
+            temp = obj->cell.car;
+            obj->cell.car = result;
+            obj->marked = FORWARDED;
+            result->cell.car = copy(temp);
+            result->cell.cdr = copy(obj->cell.cdr);
+            return result;
+        case CONTINUATION:
+            // to do
+            break;
+        case MACRO:
+        case CLOSURE:
+            std::cout << "Copying closure " << std::endl;
+            if (obj->marked == FORWARDED) {
+                return obj->cell.car; 
+            }
+            result = getObject(memory, obj->type);
+            result->closure = (Closure*)memory.getBytes(sizeof(Closure));
+            result->closure->body = copy(obj->closure->body);
+            result->closure->parameters = copy(obj->closure->parameters);
+            result->closure->env = copyEnv(obj->closure->env);
+            obj->cell.car = result;
+            obj->marked = FORWARDED;
+            return result;
+        case PRIM_PROC:
+            result = getObject(memory, obj->type);
+            result->prim_proc = obj->prim_proc;
+            return result;
+    }
+    return result;
+
+}
+
+Environment* copyEnv(Environment* env) {
+    return env;
+}
+
         
 
 void setFrame(Frame* frame, Object* to_eval, Object* result, Frame* ret, Environment* env, FrameProcedure cont, bool as_list) {
