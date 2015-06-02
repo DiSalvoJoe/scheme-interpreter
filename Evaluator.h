@@ -9,7 +9,8 @@ public:
     static void beginIf(Evaluator& evaluator);
     static void selectIf(Evaluator& evaluator);
     static void dispatchEval(Evaluator& evaluator);
-    static void beginBind(Evaluator& evaluator);
+    static void beginDefine(Evaluator& evaluator);
+    static void beginSet(Evaluator& evaluator);
     static void doBind(Evaluator& evaluator);
     static void evalSequence(Evaluator& evaluator);
     static void evalList(Evaluator& evaluator);
@@ -22,14 +23,22 @@ public:
 class Evaluator {
 public:
     static Evaluator& getEvaluator();
-    ~Evaluator() {}
+
     Object* eval(Object* obj, Environment* env);
-    void reinitialize();
+
+    ~Evaluator() {}
 
 private:
     Evaluator();
 
     void sendReturn();
+
+    void bindToEvalSymToResult(Environment* env);
+
+    void bindAll(Environment* env); //, Object* params, Object* args);
+
+    Object* to_eval_temp;
+    Environment* env_temp;
 
     Frame* final_frame;
     Frame* top_frame;

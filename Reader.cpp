@@ -128,7 +128,7 @@ Token Tokenizer::getStringLiteral() {
         ++index;
     }
     ++index; // skip ending "
-    return Token(memory.getSchemeString(buffer.c_str()), STRING_LITERAL);
+    return Token(getSchemeString(memory, buffer.c_str()), STRING_LITERAL);
 }
 
 void Tokenizer::skipWhiteSpace() {

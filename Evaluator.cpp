@@ -44,7 +44,26 @@ void EvaluationProcedure::selectIf(Evaluator& evaluator) {
 
 
 // Evaluate the rvalue
-void EvaluationProcedure::beginBind(Evaluator& evaluator) {
+void EvaluationProcedure::beginDefine(Evaluator& evaluator) {
+    Frame* eval_rvalue_frame = getFrame(evaluator.memory);
+    Frame* top = evaluator.top_frame;
+    // are we defining a function with the form (define (square x) (* x x))
+    Object* lvalue;
+    if (top->to_eval->cell.car->type == CONS) {
+        lvalue = top->to_eval->cell.car->cell.car;
+        top->to_eval->cell.car = top->to_eval->cell.car->cell.cdr; // parameter list
+        setFrame(eval_rvalue_frame, top->to_eval, nullptr, top, top->env, &EvaluationProcedure::lambdaToClosure, false);
+    } else {
+        lvalue = top->to_eval->cell.car;
+        Object* rvalue = top->to_eval->cell.cdr->cell.car;
+        setFrame(eval_rvalue_frame, rvalue, nullptr, top, top->env, &EvaluationProcedure::dispatchEval, false);
+    }
+    top->to_eval = lvalue; 
+    top->cont = &EvaluationProcedure::doBind; 
+    evaluator.top_frame = eval_rvalue_frame;
+}
+
+void EvaluationProcedure::beginSet(Evaluator& evaluator) {
     Frame* eval_rvalue_frame = getFrame(evaluator.memory);
     Frame* top = evaluator.top_frame;
     Object* rvalue = top->to_eval->cell.cdr->cell.car;
@@ -57,7 +76,7 @@ void EvaluationProcedure::beginBind(Evaluator& evaluator) {
 // Bind the lvalue (car of to_eval) to the rvalue (result), return the rvalue
 void EvaluationProcedure::doBind(Evaluator& evaluator) {
     Frame* top = evaluator.top_frame;
-    top->env->bind(top->to_eval->sym, top->result);
+    evaluator.bindToEvalSymToResult(top->env); 
     evaluator.sendReturn();
 }
 
@@ -137,22 +156,38 @@ void EvaluationProcedure::selectApply(Evaluator& evaluator) {
 }
 
 void EvaluationProcedure::applyClosure(Evaluator& evaluator) {
-    Environment* new_env = new Environment();  // gets the bytes from the main memory
+    // need enough mem for a new environment, and assoc pairs for each argument
+    char* bytes = evaluator.memory.getBytes(sizeof(Environment) + 3*sizeof(Object)*size(evaluator.top_frame->result->cell.car));
+
     Frame* top = evaluator.top_frame;
     Closure* closure = top->result->cell.cdr->closure;
     Object* args = top->result->cell.car;
-
-    // create a new environment with this environment enclosing it
+    Object* params = closure->parameters;
+    Environment* new_env = (Environment*)bytes;
+    bytes += sizeof(Environment);
     new_env->enclosing_env = top->env;
+    new_env->assoc_list = nullptr;
+    new_env->marked = UNMARKED;
 
     // bind the parameters to the evaluated arguments
-    // when I change the Environments to use scheme association lists, this next bit
-    // will have to change, since binding with an assoc list might trigger GC.
-    Object* params = closure->parameters;
     while (params && args) {
+        Object* entry = (Object*)bytes;
+        bytes += sizeof(Object);
+        Object* pair = (Object*)bytes;
+        bytes+=sizeof(Object);
+        Object* sym_obj = (Object*)bytes;
+        bytes+=sizeof(Object);
+        entry->type = CONS; pair->type = CONS; sym_obj->type = SYMBOL;
+        entry->marked = UNMARKED; pair->marked = UNMARKED; sym_obj->marked= UNMARKED;
+        entry->cell.car = pair;
+        pair->cell.car = sym_obj;
+
         symbol identifier = params->cell.car->sym;
         Object* rvalue = args->cell.car;
-        new_env->bind(identifier, rvalue);
+        entry->cell.car->cell.car->sym = identifier;
+        entry->cell.car->cell.cdr = rvalue;
+        entry->cell.cdr = new_env->assoc_list;
+        new_env->assoc_list = entry;
         params = params->cell.cdr;
         args = args->cell.cdr;
     }
@@ -186,7 +221,7 @@ void EvaluationProcedure::dispatchEval(Evaluator& evaluator) {
         return;
     } else {
         if (to_eval->type == SYMBOL) {
-            frame->result = frame->env->lookup(to_eval->sym);
+            frame->result = lookup(frame->env, to_eval->sym); 
             evaluator.sendReturn();
             return;
         } 
@@ -207,8 +242,14 @@ void EvaluationProcedure::dispatchEval(Evaluator& evaluator) {
                 return;
             }
 
-            else if (car == evaluator.define_sym || car == evaluator.set_sym) {
-                frame->cont = &EvaluationProcedure::beginBind;
+            else if (car == evaluator.define_sym) {
+                frame->cont = &EvaluationProcedure::beginDefine;
+                frame->to_eval = to_eval->cell.cdr;
+                return;
+            }
+                
+            else if (car == evaluator.set_sym) {
+                frame->cont = &EvaluationProcedure::beginSet;
                 frame->to_eval = to_eval->cell.cdr;
                 return;
             }
@@ -242,25 +283,27 @@ Evaluator::Evaluator() :
     quote_sym(symbol_table.stringToSymbol("quote")),
     lambda_sym(symbol_table.stringToSymbol("lambda")),
     begin_sym(symbol_table.stringToSymbol("begin"))
-{
-    final_frame = getFrame(memory);
-    top_frame = getFrame(memory);
-}
+{}
 
 Evaluator& Evaluator::getEvaluator() {
     static Evaluator evaluator;
     return evaluator;
 }
 
-void Evaluator::reinitialize() {
-    final_frame = getFrame(memory);
-    top_frame = getFrame(memory);
-}
-
 
 Object* Evaluator::eval(Object* obj, Environment* env) {
+    // To avoid stale pointers after GC
+    to_eval_temp = obj;
+    env_temp = env;
+
+    final_frame = getFrame(memory);
+    top_frame = getFrame(memory);
+
     setFrame(final_frame, nullptr, nullptr, nullptr, nullptr, nullptr, false);
-    setFrame(top_frame, obj, nullptr, final_frame, env, &EvaluationProcedure::dispatchEval, false);
+    setFrame(top_frame, to_eval_temp, nullptr, final_frame, env_temp, &EvaluationProcedure::dispatchEval, false);
+
+    to_eval_temp = nullptr;
+    env_temp = nullptr;
 
     while (!final_frame->result) {
         top_frame->cont(*this);
@@ -270,4 +313,22 @@ Object* Evaluator::eval(Object* obj, Environment* env) {
     top_frame = nullptr;
     final_frame = nullptr;
     return result;
+}
+
+void Evaluator::bindToEvalSymToResult(Environment* env) {
+    if (!env) {
+        symbol identifier = top_frame->to_eval->sym;
+        Object* rvalue = top_frame->result;
+        GlobalEnvironment& ge = GlobalEnvironment::getGlobalEnvironment();
+        ge.bind(identifier, rvalue);
+        return;
+    } else {
+        Object* entry = getAssocListPair(memory);
+        symbol identifier = top_frame->to_eval->sym;
+        Object* rvalue = top_frame->result;
+        entry->cell.car->cell.car->sym = identifier;
+        entry->cell.car->cell.cdr = rvalue;
+        entry->cell.cdr = env->assoc_list;
+        env->assoc_list = entry;
+    }
 }

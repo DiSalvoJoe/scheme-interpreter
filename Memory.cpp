@@ -4,16 +4,6 @@
 #include <cstdlib>
 #include <iostream>
 
-Object* Heap::getSchemeString(const char* str) {
-    int str_len = strlen(str);
-    char* alloc = getBytes(str_len + sizeof(Object) + 1);
-    strcpy(alloc, str);
-    alloc[str_len] = '\0';
-    Object* scheme_obj = (Object*)(alloc + str_len + 1);
-    scheme_obj->type = STRING;
-    scheme_obj->string = alloc;
-    return scheme_obj;
-}
 
 
 ChunkHeap::ChunkHeap() {
@@ -113,6 +103,13 @@ char* Memory::getBytes(size_t bytes) {
 	char* addr = heap_ptr;
 	heap_ptr += bytes;
 	return addr;
+}
+
+void Memory::clear() {
+    for (int i = 0; i < heap_end-heap_begin; i++) {
+        heap_begin[i] = 0;
+    }
+    heap_ptr = heap_begin;
 }
 
 SymbolTable& SymbolTable::getSymbolTable() {

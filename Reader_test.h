@@ -11,7 +11,7 @@ public:
 		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
         ChunkHeap heap;
         Memory& memory = Memory::getTheMemory();
-		Tokenizer tokenizer(memory.getSchemeString("(define (square x)\n\t \t (lambda (x) \n (* x x)))"), heap);
+		Tokenizer tokenizer(getSchemeString(memory,"(define (square x)\n\t \t (lambda (x) \n (* x x)))"), heap);
 
 		Token tok = tokenizer.nextToken();
 		ASSERT_TOKEN_TOKEN(tok, LIST_BEGIN);
@@ -64,7 +64,7 @@ public:
 		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
         ChunkHeap heap;
         Memory& memory = Memory::getTheMemory();
-		Tokenizer tokenizer(memory.getSchemeString("(+ 124.241 444 -62 -1.32)"), heap);
+		Tokenizer tokenizer(getSchemeString(memory,"(+ 124.241 444 -62 -1.32)"), heap);
 
 		Token tok = tokenizer.nextToken();
 		ASSERT_TOKEN_TOKEN(tok, LIST_BEGIN);
@@ -91,13 +91,13 @@ public:
         ChunkHeap heap;
         Memory& memory = Memory::getTheMemory();
 
-		Tokenizer tokenizerEmpty(memory.getSchemeString(""), heap);
+		Tokenizer tokenizerEmpty(getSchemeString(memory,""), heap);
 		Token tok = tokenizerEmpty.nextToken();
 		ASSERT_TOKEN_TOKEN(tok, END_TOKEN);
 		tok = tokenizerEmpty.nextToken();
 		ASSERT_TOKEN_TOKEN(tok, END_TOKEN);
 
-		Tokenizer tokenizerSpaces(memory.getSchemeString("   \n \n     \t    \n    \t"), heap);
+		Tokenizer tokenizerSpaces(getSchemeString(memory,"   \n \n     \t    \n    \t"), heap);
 		tok = tokenizerSpaces.nextToken();
 		ASSERT_TOKEN_TOKEN(tok, END_TOKEN);
 		tok = tokenizerSpaces.nextToken();
@@ -108,7 +108,7 @@ public:
 		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
         ChunkHeap heap;
         Memory& memory = Memory::getTheMemory();
-		Tokenizer tokenizer(memory.getSchemeString("a4<m!-4->+*?!?!323!5 - -51"), heap);
+		Tokenizer tokenizer(getSchemeString(memory,"a4<m!-4->+*?!?!323!5 - -51"), heap);
 
 		Token tok = tokenizer.nextToken();
 		ASSERT_TOKEN_SYMBOL(tok, symbol_table, "a4<m!-4->+*?!?!323!5");
@@ -126,7 +126,7 @@ public:
 		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
         Memory& memory = Memory::getTheMemory();
         ChunkHeap heap;
-		Tokenizer tokenizer(memory.getSchemeString("\"test \\\" \\n ing\""), heap);
+		Tokenizer tokenizer(getSchemeString(memory,"\"test \\\" \\n ing\""), heap);
         Token tok = tokenizer.nextToken();
         ASSERT_TOKEN_STRING(tok, "test \" \n ing");
         tok = tokenizer.nextToken();
@@ -137,7 +137,7 @@ public:
 		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
         Memory& memory = Memory::getTheMemory();
         ChunkHeap heap;
-		Tokenizer tokenizer(memory.getSchemeString("(if #t xyz #f)"), heap);
+		Tokenizer tokenizer(getSchemeString(memory,"(if #t xyz #f)"), heap);
 
         Token tok = tokenizer.nextToken();
         ASSERT_TOKEN_TOKEN(tok, LIST_BEGIN);
@@ -200,10 +200,10 @@ public:
         Memory& memory = Memory::getTheMemory();
 		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
 
-        Object* float_lit = memory.getSchemeString("153.63");
-        Object* int_lit = memory.getSchemeString("153");
-        Object* bool_lit = memory.getSchemeString("#t");
-        Object* sym = memory.getSchemeString("define");
+        Object* float_lit = getSchemeString(memory,"153.63");
+        Object* int_lit = getSchemeString(memory,"153");
+        Object* bool_lit = getSchemeString(memory,"#t");
+        Object* sym = getSchemeString(memory,"define");
 
         Reader float_reader(float_lit);
         Reader int_reader(int_lit);
@@ -228,7 +228,7 @@ public:
         Memory& memory = Memory::getTheMemory();
 		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
 
-        Object* list = memory.getSchemeString("(+ 1 2)");
+        Object* list = getSchemeString(memory,"(+ 1 2)");
         Reader reader(list);
 
         Object* result = reader.read();
@@ -254,7 +254,7 @@ public:
         Memory& memory = Memory::getTheMemory();
 		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
 
-        Object* list = memory.getSchemeString("()");
+        Object* list = getSchemeString(memory,"()");
         Reader reader(list);
         TS_ASSERT_EQUALS(reader.read(), nullptr);
     }
@@ -263,7 +263,7 @@ public:
         Memory& memory = Memory::getTheMemory();
 		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
 
-        Object* atom = memory.getSchemeString("'atom");
+        Object* atom = getSchemeString(memory,"'atom");
         // ['quote' | ] -> ['atom' | X]
         Reader reader(atom);
         Object* obj = reader.read();
@@ -279,7 +279,7 @@ public:
         Memory& memory = Memory::getTheMemory();
 		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
 
-        Object* list = memory.getSchemeString("'(list 1)");
+        Object* list = getSchemeString(memory,"'(list 1)");
         // ['quote' | ] -> [ ['list' | ] -> [1 | X] | X]
         Reader reader(list);
         Object* obj = reader.read();

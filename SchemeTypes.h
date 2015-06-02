@@ -5,7 +5,7 @@
 #include <cstring>
 
 typedef char* symbol;
-class Environment;
+struct Environment;
 class Evaluator;
 struct Frame;
 typedef void (*FrameProcedure)(Evaluator& evaluator);
@@ -73,29 +73,30 @@ struct Frame {
 
 typedef struct Frame Frame;
 
+struct Environment {
+    MarkStatus marked : 1;
+    struct Environment* enclosing_env;
+    Object* assoc_list;
+};
+typedef struct Environment Environment;
 
-void setFrame(Frame* frame, Object* to_eval, Object* result, Frame* ret, Environment* env, FrameProcedure cont, bool as_list);
-Object* reverseList(Object* obj);
-bool isSelfEvaluating(Object* obj);
-bool asBool(Object* obj);
-bool equal(Object* left, Object* right);
-size_t size(Object* list);
-Object* copy(Object* obj);
-
-class Environment {
+class GlobalEnvironment {
 public:
-    void* operator new(size_t);
-    void operator delete(void* p);
-    Environment();
-    ~Environment() {}
+    static GlobalEnvironment& getGlobalEnvironment();
+
+    ~GlobalEnvironment() {}
 
     void bind(symbol identifier, Object* rvalue);
 
     Object* lookup(symbol identifier);
 
-    Environment* enclosing_env;
+    void copyAll();
+
+    void clear();
 
 private:
+    GlobalEnvironment();
+
 	struct cmp_str  {
 		bool operator()(char const *a, char const *b) {
 			return std::strcmp(a, b) < 0;
@@ -107,5 +108,25 @@ private:
     // Change this to be a scheme association list?
 	std::map<symbol, Object*, cmp_str> table;
 };
+
+
+void setFrame(Frame* frame, Object* to_eval, Object* result, Frame* ret, Environment* env, FrameProcedure cont, bool as_list);
+
+Object* reverseList(Object* obj);
+
+bool isSelfEvaluating(Object* obj);
+
+bool asBool(Object* obj);
+
+bool equal(Object* left, Object* right);
+
+size_t size(Object* list);
+
+Object* copy(Object* obj);
+
+Environment* copy(Environment* env);
+
+Object* lookup(Environment* env, symbol identifier);
+
 
 #endif

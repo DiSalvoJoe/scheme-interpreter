@@ -13,10 +13,9 @@ public:
 		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
         Evaluator& evaluator = Evaluator::getEvaluator();
 
-        Object* obj = memory.getSchemeString("124");
+        Object* obj = getSchemeString(memory,"124");
         Reader reader(obj);
 
-        evaluator.reinitialize();
         Object* evalled = evaluator.eval(reader.read(), nullptr);
         TS_ASSERT_EQUALS(evalled->type, INT);
         TS_ASSERT_EQUALS(evalled->integer, 124);
@@ -38,6 +37,9 @@ public:
     void testDefine() {
         assertEvalsTo("(begin (define test (if 1 2 3)) test)", "2");
         assertEvalsTo("(define a 1)", "1");
+        assertEvalsTo("(begin (define a 1) a)", "1");
+        assertEvalsTo("(begin (define (always-false) #f) (always-false))", "#f");
+        assertEvalsTo("(begin (define (identity f) f) (identity \"hello\"))", "\"hello\"");
     }
 
     void testBegin() {
@@ -48,17 +50,13 @@ public:
         Memory& memory = Memory::getTheMemory();
 		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
         Evaluator& evaluator = Evaluator::getEvaluator();
-        Environment env;
 
-        Object* obj = memory.getSchemeString("(lambda (x) x) (lambda (x y z) (+ 1 2) 5) (x) (x y z) ((+ 1 2) 5)");
+        Object* obj = getSchemeString(memory,"(lambda (x) x) (lambda (x y z) (+ 1 2) 5) (x) (x y z) ((+ 1 2) 5)");
         Reader reader(obj);
 
-        evaluator.reinitialize();
-        Object* identity_closure = evaluator.eval(reader.read(), &env);
+        Object* identity_closure = evaluator.eval(reader.read(), nullptr);
         Object* old_body = identity_closure->closure->body;
-        evaluator.reinitialize();
-        Object* add_then_5 = evaluator.eval(reader.read(), &env);
-        evaluator.reinitialize();
+        Object* add_then_5 = evaluator.eval(reader.read(), nullptr);
         Object* x_list = reader.read();
         Object* xyz_list = reader.read();
         Object* plus12_list = reader.read();
@@ -66,11 +64,11 @@ public:
         TS_ASSERT_EQUALS(identity_closure->type, CLOSURE);
         TS_ASSERT_EQUALS(add_then_5->type, CLOSURE);
 
-        TS_ASSERT_EQUALS(identity_closure->closure->env, &env);
+        TS_ASSERT_EQUALS(identity_closure->closure->env, nullptr);
         TS_ASSERT(equal(identity_closure->closure->parameters, x_list));
         TS_ASSERT(equal(identity_closure->closure->body, x_list));
 
-        TS_ASSERT_EQUALS(add_then_5->closure->env, &env);
+        TS_ASSERT_EQUALS(add_then_5->closure->env, nullptr);
         TS_ASSERT(equal(add_then_5->closure->parameters, xyz_list));
         TS_ASSERT(equal(add_then_5->closure->body, plus12_list));
     }
@@ -89,15 +87,16 @@ private:
     void assertEvalsTo(const char* lhs, const char* result) {
         Memory& memory = Memory::getTheMemory();
         Evaluator& evaluator = Evaluator::getEvaluator();
-        Environment env;
+        GlobalEnvironment& ge = GlobalEnvironment::getGlobalEnvironment();
 
-        Object* left = memory.getSchemeString(lhs);
+        Object* left = getSchemeString(memory,lhs);
         Reader left_reader(left);
-        Object* right = memory.getSchemeString(result);
+        Object* right = getSchemeString(memory,result);
         Reader right_reader(right);
 
-        evaluator.reinitialize();
-        TS_ASSERT(equal(evaluator.eval(left_reader.read(), &env), right_reader.read()));
+        TS_ASSERT(equal(evaluator.eval(left_reader.read(), nullptr), right_reader.read()));
+        ge.clear();
+        memory.clear();
     }
 
 

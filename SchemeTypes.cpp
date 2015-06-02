@@ -2,35 +2,75 @@
 #include "Memory.h"
 #include <iostream>
 
-void* Environment::operator new(size_t size) {
-    Memory& mem = Memory::getTheMemory();
-    return (void*)mem.getBytes(size);
-}
-void Environment::operator delete(void* p) {
-    free(p);
-}
-Environment::Environment() {
-    enclosing_env = nullptr;
+/* Global Environment */
+GlobalEnvironment::GlobalEnvironment() {}
+
+GlobalEnvironment& GlobalEnvironment::getGlobalEnvironment() {
+    static GlobalEnvironment ge;
+    return ge;
 }
 
-Object* Environment::lookup(symbol identifier) {
+Object* GlobalEnvironment::lookup(symbol identifier) {
     auto found = table.find(identifier);
     if (found == table.end()) {
-        if (enclosing_env) {
-            return enclosing_env->lookup(identifier);
-        } else {
-            return nullptr;
-        }
+        return nullptr;
     } else {
         return found->second;
     }
 }
 
-void Environment::bind(symbol identifier, Object* rvalue) {
+void GlobalEnvironment::bind(symbol identifier, Object* rvalue) {
     table.insert(std::pair<symbol, Object*>(identifier, rvalue));
 }
 
+void GlobalEnvironment::copyAll() {
+    for (auto pair : table) {
+        pair.second = copy(pair.second);
+    }
+}
 
+void GlobalEnvironment::clear() {
+    table.clear();
+}
+
+/* Environments */
+Environment* copy(Environment* env) {
+    if (!env) {
+        return nullptr;
+    }
+    if (env->marked == FORWARDED) {
+        return env->enclosing_env;
+    } else {
+        Memory& memory = Memory::getTheMemory();
+        Environment* copied = (Environment*)memory.getBytes(sizeof(Environment));
+        copied->marked = UNMARKED;
+        copied->enclosing_env = copy(env->enclosing_env); 
+        copied->assoc_list = copy(env->assoc_list);
+        env->enclosing_env = copied;
+        env->marked = FORWARDED;
+        return copied;
+    }
+}
+
+Object* lookup(Environment* env, symbol identifier) {
+    while (env) {
+        Object* head = env->assoc_list;
+        while (head) {
+            if (head->cell.car->cell.car->sym == identifier) {
+                return head->cell.car->cell.cdr;
+            } else {
+                head = head->cell.cdr;
+            }
+        }
+        env = env->enclosing_env;
+    } 
+
+    GlobalEnvironment& ge = GlobalEnvironment::getGlobalEnvironment();
+    return ge.lookup(identifier);
+}
+
+
+/* Functions on Objects */
 Object* reverseList(Object* obj) {
     if (obj == nullptr || obj->type != CONS) {
         return obj;
@@ -113,7 +153,6 @@ size_t size(Object* obj) {
     }
 }
 
-Environment* copyEnv(Environment* env);
 
 Object* copy(Object* obj) {
     if (!obj ) {
@@ -182,7 +221,7 @@ Object* copy(Object* obj) {
             result->closure = (Closure*)memory.getBytes(sizeof(Closure));
             result->closure->body = copy(obj->closure->body);
             result->closure->parameters = copy(obj->closure->parameters);
-            result->closure->env = copyEnv(obj->closure->env);
+            result->closure->env = copy(obj->closure->env);
             obj->cell.car = result;
             obj->marked = FORWARDED;
             return result;
@@ -194,12 +233,6 @@ Object* copy(Object* obj) {
     return result;
 
 }
-
-Environment* copyEnv(Environment* env) {
-    return env;
-}
-
-        
 
 void setFrame(Frame* frame, Object* to_eval, Object* result, Frame* ret, Environment* env, FrameProcedure cont, bool as_list) {
     frame->to_eval = to_eval;
