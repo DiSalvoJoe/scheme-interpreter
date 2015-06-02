@@ -13,8 +13,8 @@ void Evaluator::sendReturn() {
     if (to->receive_return_as_list) {
         Object* link = (Object*)memory.getBytes(sizeof(Object));
         // if GC occurs, the from and to pointers will be invalid. Need to reassign them.
-        Frame* from = top_frame;
-        Frame* to = from->return_frame;
+        from = top_frame;
+        to = from->return_frame;
         link->type = CONS;
         link->cell.cdr = to->result;
         link->cell.car = from->result;
@@ -25,49 +25,45 @@ void Evaluator::sendReturn() {
     top_frame = to;
 }
 
-void dispatchEval(Evaluator& evaluator);
-void selectIf(Evaluator& evaluator);
-
 // Evaluate the predicate.
-void beginIf(Evaluator& evaluator) {
+void EvaluationProcedure::beginIf(Evaluator& evaluator) {
     Frame* predicate_frame = (Frame*)evaluator.memory.getBytes(sizeof(Frame));
     Frame* top = evaluator.top_frame;
-    setFrame(predicate_frame, top->to_eval->cell.car, nullptr, top, top->env, &dispatchEval, false); 
+    setFrame(predicate_frame, top->to_eval->cell.car, nullptr, top, top->env, &EvaluationProcedure::dispatchEval, false); 
     top->to_eval = top->to_eval->cell.cdr;
-    top->cont = &selectIf; // continue the 'if' evaluation after evaluating the predicate
+    top->cont = &EvaluationProcedure::selectIf; // continue the 'if' evaluation after evaluating the predicate
     evaluator.top_frame = predicate_frame;
 }
 
 // if the predicate is true, evaluate the consequent (car), otherwise evaluate the alternative (cadr)
-void selectIf(Evaluator& evaluator) {
+void EvaluationProcedure::selectIf(Evaluator& evaluator) {
     Frame* top = evaluator.top_frame;
     top->to_eval = asBool(top->result) ? (top->to_eval->cell.car) : (top->to_eval->cell.cdr->cell.car);
     top->result = nullptr;
-    top->cont = &dispatchEval; // for tail call optimization, update this frame instead of creating a new one 
+    top->cont = &EvaluationProcedure::dispatchEval; // for tail call optimization, update this frame instead of creating a new one 
 }
 
 
-void doBind(Evaluator& evaluator);
 // Evaluate the rvalue
-void beginBind(Evaluator& evaluator) {
+void EvaluationProcedure::beginBind(Evaluator& evaluator) {
     Frame* eval_rvalue_frame = (Frame*)evaluator.memory.getBytes(sizeof(Frame));
     Frame* top = evaluator.top_frame;
     Object* rvalue = top->to_eval->cell.cdr->cell.car;
-    setFrame(eval_rvalue_frame, rvalue, nullptr, top, top->env, &dispatchEval, false);
+    setFrame(eval_rvalue_frame, rvalue, nullptr, top, top->env, &EvaluationProcedure::dispatchEval, false);
     top->to_eval = top->to_eval->cell.car; // save the lvalue in to_eval
-    top->cont = &doBind; 
+    top->cont = &EvaluationProcedure::doBind; 
     evaluator.top_frame = eval_rvalue_frame;
 }
 
 // Bind the lvalue (car of to_eval) to the rvalue (result), return the rvalue
-void doBind(Evaluator& evaluator) {
+void EvaluationProcedure::doBind(Evaluator& evaluator) {
     Frame* top = evaluator.top_frame;
     top->env->bind(top->to_eval->sym, top->result);
     evaluator.sendReturn();
 }
 
 // to_eval is a list of things to evaluate in sequence
-void evalSequence(Evaluator& evaluator) {
+void EvaluationProcedure::evalSequence(Evaluator& evaluator) {
     Frame* top = evaluator.top_frame;
     // if there is nothing left to eval, return. this frame's result contains the evaluation of
     // the last expression in the sequence (or null, if there was no sequence).
@@ -78,7 +74,7 @@ void evalSequence(Evaluator& evaluator) {
     else if (! top->to_eval->cell.cdr) {
         Frame* top = evaluator.top_frame;
         top->to_eval = top->to_eval->cell.car;
-        top->cont = &dispatchEval;
+        top->cont = &EvaluationProcedure::dispatchEval;
     } 
     // otherwise, evaluate the first and set to_eval to be the rest of the sequence.
     else {  
@@ -86,12 +82,12 @@ void evalSequence(Evaluator& evaluator) {
         Frame* top = evaluator.top_frame;
         Object* car = top->to_eval->cell.car;
         top->to_eval = top->to_eval->cell.cdr;
-        setFrame(eval_car_frame, car, nullptr, top, top->env, &dispatchEval, false);
+        setFrame(eval_car_frame, car, nullptr, top, top->env, &EvaluationProcedure::dispatchEval, false);
         evaluator.top_frame = eval_car_frame;
     }
 }
 
-void evalList(Evaluator& evaluator) {
+void EvaluationProcedure::evalList(Evaluator& evaluator) {
     Frame* top = evaluator.top_frame;
     if (!top->to_eval) {
         evaluator.sendReturn();
@@ -101,25 +97,22 @@ void evalList(Evaluator& evaluator) {
         Frame* top = evaluator.top_frame; // in case GC occurred
         Object* car = top->to_eval->cell.car;
         top->to_eval = top->to_eval->cell.cdr;
-        setFrame(eval_car_frame, car, nullptr, top, top->env, &dispatchEval, false);
+        setFrame(eval_car_frame, car, nullptr, top, top->env, &EvaluationProcedure::dispatchEval, false);
         evaluator.top_frame = eval_car_frame;
     }
 }
 
-void selectApply(Evaluator& evaluator);
-void applyClosure(Evaluator& evaluator);
-
 // Evaluate the procedure (car of to_eval) and store it in result
-void beginApply(Evaluator& evaluator) {
+void EvaluationProcedure::beginApply(Evaluator& evaluator) {
     Frame* eval_proc_frame = (Frame*)evaluator.memory.getBytes(sizeof(Frame));
     Frame* top = evaluator.top_frame;
-    setFrame(eval_proc_frame, top->to_eval->cell.car,nullptr, top, top->env, &dispatchEval, false);
+    setFrame(eval_proc_frame, top->to_eval->cell.car,nullptr, top, top->env, &EvaluationProcedure::dispatchEval, false);
     top->to_eval = top->to_eval->cell.cdr;
-    top->cont = &selectApply;
+    top->cont = &EvaluationProcedure::selectApply;
     evaluator.top_frame = eval_proc_frame;
 }
 
-void selectApply(Evaluator& evaluator) {
+void EvaluationProcedure::selectApply(Evaluator& evaluator) {
     Frame* top = evaluator.top_frame;
     Object* proc = top->result;
     if (proc->type != MACRO) {
@@ -129,7 +122,7 @@ void selectApply(Evaluator& evaluator) {
         Frame* top = evaluator.top_frame; // in case GC occurred
         setFrame(eval_args, top->to_eval, nullptr, top, top->env, &evalList, true);
         if (proc->type == CLOSURE) {
-            top->cont = &applyClosure;
+            top->cont = &EvaluationProcedure::applyClosure;
         } else if (proc->type == PRIM_PROC) {
 
         } else if (proc->type == CONTINUATION) {
@@ -144,7 +137,7 @@ void selectApply(Evaluator& evaluator) {
     }
 }
 
-void applyClosure(Evaluator& evaluator) {
+void EvaluationProcedure::applyClosure(Evaluator& evaluator) {
     Environment* new_env = new Environment();  // gets the bytes from the main memory
     Frame* top = evaluator.top_frame;
     Closure* closure = top->result->cell.cdr->closure;
@@ -170,10 +163,10 @@ void applyClosure(Evaluator& evaluator) {
     top->receive_return_as_list = false;
     top->env = new_env;
     top->to_eval = closure->body;
-    top->cont = &evalSequence;
+    top->cont = &EvaluationProcedure::evalSequence;
 }
 
-void lambdaToClosure(Evaluator& evaluator) {
+void EvaluationProcedure::lambdaToClosure(Evaluator& evaluator) {
     // get a closure and a wrapper (object) to put it in, return it.
     Object* closure_obj = (Object*)evaluator.memory.getBytes(sizeof(Object)+sizeof(Closure));
     Closure* closure = (Closure*)(closure_obj+sizeof(Object));
@@ -187,7 +180,7 @@ void lambdaToClosure(Evaluator& evaluator) {
     evaluator.sendReturn();
 }
 
-void dispatchEval(Evaluator& evaluator) {
+void EvaluationProcedure::dispatchEval(Evaluator& evaluator) {
     Frame* frame = evaluator.top_frame;
     Object* to_eval = frame->to_eval;
     if (isSelfEvaluating(to_eval)) {
@@ -210,32 +203,32 @@ void dispatchEval(Evaluator& evaluator) {
 
             else if (car == evaluator.if_sym) {
                 frame->receive_return_as_list = false;
-                frame->cont = &beginIf;
+                frame->cont = &EvaluationProcedure::beginIf;
                 frame->to_eval = to_eval->cell.cdr;
             }
 
             else if (car == evaluator.define_sym || car == evaluator.set_sym) {
                 frame->receive_return_as_list = false;
-                frame->cont = &beginBind;
+                frame->cont = &EvaluationProcedure::beginBind;
                 frame->to_eval = to_eval->cell.cdr;
             }
 
             else if (car == evaluator.begin_sym) {
                 frame->receive_return_as_list = false;
-                frame->cont = &evalSequence;
+                frame->cont = &EvaluationProcedure::evalSequence;
                 frame->to_eval = to_eval->cell.cdr;
             }
 
             else if (car == evaluator.lambda_sym) {
                 frame->receive_return_as_list = false;
-                frame->cont = &lambdaToClosure;
+                frame->cont = &EvaluationProcedure::lambdaToClosure;
                 frame->to_eval = to_eval->cell.cdr;
             }
 
             // applying a procedure to an object.
             else {
                 frame->receive_return_as_list = false;
-                frame->cont = &beginApply;
+                frame->cont = &EvaluationProcedure::beginApply;
             }
         }
     }
@@ -250,21 +243,22 @@ Evaluator::Evaluator() :
     quote_sym(symbol_table.stringToSymbol("quote")),
     lambda_sym(symbol_table.stringToSymbol("lambda")),
     begin_sym(symbol_table.stringToSymbol("begin"))
-{}
+{
+    final_frame = (Frame*)memory.getBytes(sizeof(Frame));
+    top_frame = (Frame*)memory.getBytes(sizeof(Frame));
+}
 
 
 Object* Evaluator::eval(Object* obj, Environment* env) {
-    final_frame = (Frame*)memory.getBytes(sizeof(Frame));
-    top_frame = (Frame*)memory.getBytes(sizeof(Frame));
     setFrame(final_frame, nullptr, nullptr, nullptr, nullptr, nullptr, false);
-    setFrame(top_frame, obj, nullptr, final_frame, env, &dispatchEval, false);
+    setFrame(top_frame, obj, nullptr, final_frame, env, &EvaluationProcedure::dispatchEval, false);
 
     while (!final_frame->result) {
         top_frame->cont(*this);
     }
 
     Object* result = final_frame->result;
-    final_frame = nullptr;
-    top_frame = nullptr;
+    setFrame(final_frame, nullptr, nullptr, nullptr, nullptr, nullptr, false);
+    setFrame(top_frame, nullptr, nullptr, nullptr, nullptr, nullptr, false);
     return result;
 }
