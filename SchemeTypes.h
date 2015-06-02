@@ -7,6 +7,8 @@
 typedef char* symbol;
 class Environment;
 class Evaluator;
+struct Frame;
+typedef void (*FrameProcedure)(Evaluator& evaluator);
 
 enum MarkStatus {
 	UNMARKED = 0,
@@ -53,21 +55,21 @@ struct Object {
 		symbol sym;
         ConsCell cell;
         Closure* closure;
+        FrameProcedure prim_proc;
 	};
 
 };
 
 typedef struct Object Object;
 
-struct Frame;
-typedef void (*FrameProcedure)(Evaluator& evaluator);
 struct Frame {
     Object* to_eval;
     Object* result;
     struct Frame* return_frame;
     Environment* env;
     FrameProcedure cont;
-    bool receive_return_as_list;
+    bool receive_return_as_list : 1;
+    MarkStatus marked : 1;
 };
 
 typedef struct Frame Frame;
@@ -78,6 +80,7 @@ Object* reverseList(Object* obj);
 bool isSelfEvaluating(Object* obj);
 bool asBool(Object* obj);
 bool equal(Object* left, Object* right);
+size_t size(Object* list);
 
 class Environment {
 public:

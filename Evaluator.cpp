@@ -11,11 +11,10 @@ void Evaluator::sendReturn() {
         from->result = reverseList(from->result);
     }
     if (to->receive_return_as_list) {
-        Object* link = (Object*)memory.getBytes(sizeof(Object));
+        Object* link = getObject(memory, CONS);
         // if GC occurs, the from and to pointers will be invalid. Need to reassign them.
         from = top_frame;
         to = from->return_frame;
-        link->type = CONS;
         link->cell.cdr = to->result;
         link->cell.car = from->result;
         to->result = link;
@@ -27,7 +26,7 @@ void Evaluator::sendReturn() {
 
 // Evaluate the predicate.
 void EvaluationProcedure::beginIf(Evaluator& evaluator) {
-    Frame* predicate_frame = (Frame*)evaluator.memory.getBytes(sizeof(Frame));
+    Frame* predicate_frame = getFrame(evaluator.memory);
     Frame* top = evaluator.top_frame;
     setFrame(predicate_frame, top->to_eval->cell.car, nullptr, top, top->env, &EvaluationProcedure::dispatchEval, false); 
     top->to_eval = top->to_eval->cell.cdr;
@@ -46,7 +45,7 @@ void EvaluationProcedure::selectIf(Evaluator& evaluator) {
 
 // Evaluate the rvalue
 void EvaluationProcedure::beginBind(Evaluator& evaluator) {
-    Frame* eval_rvalue_frame = (Frame*)evaluator.memory.getBytes(sizeof(Frame));
+    Frame* eval_rvalue_frame = getFrame(evaluator.memory);
     Frame* top = evaluator.top_frame;
     Object* rvalue = top->to_eval->cell.cdr->cell.car;
     setFrame(eval_rvalue_frame, rvalue, nullptr, top, top->env, &EvaluationProcedure::dispatchEval, false);
@@ -78,7 +77,7 @@ void EvaluationProcedure::evalSequence(Evaluator& evaluator) {
     } 
     // otherwise, evaluate the first and set to_eval to be the rest of the sequence.
     else {  
-        Frame* eval_car_frame = (Frame*)evaluator.memory.getBytes(sizeof(Frame));
+        Frame* eval_car_frame = getFrame(evaluator.memory);
         Frame* top = evaluator.top_frame;
         Object* car = top->to_eval->cell.car;
         top->to_eval = top->to_eval->cell.cdr;
@@ -93,7 +92,7 @@ void EvaluationProcedure::evalList(Evaluator& evaluator) {
         evaluator.sendReturn();
     } else {
         top->receive_return_as_list = true;
-        Frame* eval_car_frame = (Frame*)evaluator.memory.getBytes(sizeof(Frame));
+        Frame* eval_car_frame = getFrame(evaluator.memory);
         Frame* top = evaluator.top_frame; // in case GC occurred
         Object* car = top->to_eval->cell.car;
         top->to_eval = top->to_eval->cell.cdr;
@@ -104,7 +103,7 @@ void EvaluationProcedure::evalList(Evaluator& evaluator) {
 
 // Evaluate the procedure (car of to_eval) and store it in result
 void EvaluationProcedure::beginApply(Evaluator& evaluator) {
-    Frame* eval_proc_frame = (Frame*)evaluator.memory.getBytes(sizeof(Frame));
+    Frame* eval_proc_frame = getFrame(evaluator.memory);
     Frame* top = evaluator.top_frame;
     setFrame(eval_proc_frame, top->to_eval->cell.car,nullptr, top, top->env, &EvaluationProcedure::dispatchEval, false);
     top->to_eval = top->to_eval->cell.cdr;
@@ -118,7 +117,7 @@ void EvaluationProcedure::selectApply(Evaluator& evaluator) {
     if (proc->type != MACRO) {
         // evaluate the arguments, then move to application
         top->receive_return_as_list = true; // result will be a pair, car is evalled args and cdr is the proc
-        Frame* eval_args = (Frame*)evaluator.memory.getBytes(sizeof(Frame));
+        Frame* eval_args = getFrame(evaluator.memory);
         Frame* top = evaluator.top_frame; // in case GC occurred
         setFrame(eval_args, top->to_eval, nullptr, top, top->env, &evalList, true);
         if (proc->type == CLOSURE) {
@@ -172,6 +171,7 @@ void EvaluationProcedure::lambdaToClosure(Evaluator& evaluator) {
     Closure* closure = (Closure*)(closure_obj+sizeof(Object));
     closure_obj->type = CLOSURE;
     closure_obj->closure = closure;
+    closure_obj->marked = UNMARKED;
     closure->env = evaluator.top_frame->env;
     Object* list = evaluator.top_frame->to_eval;
     closure->parameters = list->cell.car;
@@ -244,8 +244,8 @@ Evaluator::Evaluator() :
     lambda_sym(symbol_table.stringToSymbol("lambda")),
     begin_sym(symbol_table.stringToSymbol("begin"))
 {
-    final_frame = (Frame*)memory.getBytes(sizeof(Frame));
-    top_frame = (Frame*)memory.getBytes(sizeof(Frame));
+    final_frame = getFrame(this->memory);
+    top_frame = getFrame(this->memory);
 }
 
 

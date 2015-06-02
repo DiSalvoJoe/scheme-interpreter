@@ -98,6 +98,21 @@ bool equal(Object* left, Object* right) {
     }
 }
 
+size_t size(Object* obj) {
+    if (!obj) {
+        return 0;
+    }
+
+    switch (obj->type) {
+        case STRING:
+            return strlen(obj->string);
+        case CONS:
+            return sizeof(Object) + size(obj->cell.car) + size(obj->cell.cdr);
+        default:
+            return sizeof(Object);
+    }
+}
+
         
 
 void setFrame(Frame* frame, Object* to_eval, Object* result, Frame* ret, Environment* env, FrameProcedure cont, bool as_list) {

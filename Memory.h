@@ -17,6 +17,21 @@ class Heap {
         Object* getSchemeString(const char* str);
 };
 
+template <class Mem>
+inline Object* getObject(Mem& memory, Type type) {
+    Object* obj = (Object*)memory.getBytes(sizeof(Object));
+    obj->marked = UNMARKED;
+    obj->type = type;
+    return obj;
+}
+
+template <class Mem>
+inline Frame* getFrame(Mem& memory) {
+    Frame* frame = (Frame*)memory.getBytes(sizeof(Frame));
+    frame->marked = UNMARKED;
+    return frame;
+}
+
 class ChunkHeap : public Heap {
     public:
         ChunkHeap();

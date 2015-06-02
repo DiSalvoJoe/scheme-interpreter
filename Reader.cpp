@@ -48,8 +48,7 @@ Token Tokenizer::nextToken() {
         case TRUE_LITERAL:
         case FALSE_LITERAL:
             index += tok_len_pair.second; // advance past token
-            tok_len_pair.first.scheme_symbol = (Object*)memory.getBytes(sizeof(Object));
-            tok_len_pair.first.scheme_symbol->type = BOOL;
+            tok_len_pair.first.scheme_symbol = getObject(memory, BOOL);
             tok_len_pair.first.scheme_symbol->boolean = (tok_len_pair.first.token == TRUE_LITERAL);
             return tok_len_pair.first;
         default:
@@ -84,7 +83,7 @@ Token Tokenizer::getNumber() {
 			is_float = true;
 		}
 	}
-	Object* scheme_obj = (Object*)memory.getBytes(sizeof(Object));
+	Object* scheme_obj = getObject(memory, INT);
 	if (is_float) {
 		scheme_obj->type = FLOAT;
 		scheme_obj->floatN = std::stof(buffer) * negate;
@@ -104,8 +103,7 @@ Token Tokenizer::getSymbol() {
 		++end_index;
 	}
 	symbol sym = symbol_table.stringToSymbol(scheme_string->string + index, end_index - index);
-	Object* scheme_obj = (Object*)memory.getBytes(sizeof(Object));
-	scheme_obj->type = SYMBOL;
+	Object* scheme_obj = getObject(memory, SYMBOL);
 	scheme_obj->sym = sym;
     index = end_index;
 	return Token(scheme_obj, IDENTIFIER);
@@ -193,8 +191,7 @@ Object* Reader::readList() {
     Object* result = nullptr;
     Object* element = nullptr;
     while ((element = read())) {
-        Object* link = (Object*)memory.getBytes(sizeof(Object));
-        link->type = CONS;
+        Object* link = getObject(memory, CONS);
         link->cell.cdr = result;
         link->cell.car = element;
         result = link;
@@ -204,12 +201,9 @@ Object* Reader::readList() {
 
 Object* Reader::readQuote() {
     SymbolTable& symbol_table = SymbolTable::getSymbolTable();
-    Object* quote_head = (Object*)memory.getBytes(sizeof(Object));
-    Object* quote_tail = (Object*)memory.getBytes(sizeof(Object));
-    quote_head->type = CONS;
-    quote_tail->type = CONS;
-    quote_head->cell.car = (Object*)memory.getBytes(sizeof(Object));
-    quote_head->cell.car->type = SYMBOL;
+    Object* quote_head = getObject(memory, CONS);
+    Object* quote_tail = getObject(memory, CONS);
+    quote_head->cell.car = getObject(memory, SYMBOL);
     quote_head->cell.car->sym = symbol_table.stringToSymbol("quote");
     quote_head->cell.cdr = quote_tail;
     quote_tail->cell.car = read();
