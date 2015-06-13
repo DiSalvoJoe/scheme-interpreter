@@ -6,6 +6,8 @@ Done:
 
 3) Evaluator, up through special forms (if, begin, define, lambda) and closures.
 
+4) Change Environments so that they don't leak memory (either do mark-and-sweep for environments, so their std::maps can be deleted, or change environments to use a structure of scheme objects, so stop-and-copy works for them.)
+
 
 To do:
 
@@ -15,6 +17,8 @@ To do:
 
 3) Garbage Collection (won't require any refactoring)
 
-4) Change Environments so that they don't leak memory (either do mark-and-sweep for environments, so their std::maps can be deleted, or change environments to use a structure of scheme objects, so stop-and-copy works for them.)
+4) Macros (very easy -- apply macro's closure to unevaluated arguments, then evaluate the result).
 
-5) Macros (very easy -- apply macro's closure to unevaluated arguments, then evaluate the result).
+5) Infix Cons for Reader and dotted-tail argument lists.
+
+6) Rewrite copy functions to be iterative.
