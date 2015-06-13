@@ -31,6 +31,13 @@ inline Frame* getFrame(Mem& memory) {
 }
 
 template <class Mem>
+inline Object* getPrimProc(Mem& memory, FrameProcedure procedure) {
+    Object* p = getObject(memory, PRIM_PROC);
+    p->prim_proc = procedure;
+    return p;
+}
+
+template <class Mem>
 inline Object* getClosure(Mem& memory) {
     // If you do wrapper = (Object*)memory.getBytes ....
     // then get the closure by adding to wrapper, the wrapper address is offset

@@ -3,6 +3,7 @@
 
 #include <map>
 #include <cstring>
+#include <ostream>
 
 typedef char* symbol;
 struct Environment;
@@ -127,6 +128,8 @@ Object* copy(Object* obj);
 Environment* copy(Environment* env);
 
 Object* lookup(Environment* env, symbol identifier);
+
+void write(Object* obj, std::ostream& os);
 
 
 #endif

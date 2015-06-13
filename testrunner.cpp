@@ -172,5 +172,29 @@ public:
  void runTest() { suite_EvaluatorTest.testClosureWithCapturedVariable(); }
 } testDescription_suite_EvaluatorTest_testClosureWithCapturedVariable;
 
+static class TestDescription_suite_EvaluatorTest_testAddition : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testAddition() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 86, "testAddition" ) {}
+ void runTest() { suite_EvaluatorTest.testAddition(); }
+} testDescription_suite_EvaluatorTest_testAddition;
+
+static class TestDescription_suite_EvaluatorTest_testSubtraction : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testSubtraction() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 98, "testSubtraction" ) {}
+ void runTest() { suite_EvaluatorTest.testSubtraction(); }
+} testDescription_suite_EvaluatorTest_testSubtraction;
+
+static class TestDescription_suite_EvaluatorTest_testMultiplication : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testMultiplication() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 111, "testMultiplication" ) {}
+ void runTest() { suite_EvaluatorTest.testMultiplication(); }
+} testDescription_suite_EvaluatorTest_testMultiplication;
+
+static class TestDescription_suite_EvaluatorTest_testDivision : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testDivision() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 122, "testDivision" ) {}
+ void runTest() { suite_EvaluatorTest.testDivision(); }
+} testDescription_suite_EvaluatorTest_testDivision;
+
 #include <cxxtest/Root.cpp>
 const char* CxxTest::RealWorldDescription::_worldName = "cxxtest";

@@ -17,7 +17,34 @@ public:
     static void beginApply(Evaluator& evaluator);
     static void selectApply(Evaluator& evaluator);
     static void applyClosure(Evaluator& evaluator);
+    static void applyPrimitiveProcedure(Evaluator& evaluator);
     static void lambdaToClosure(Evaluator& evaluator);
+
+    // Primitive Procedures
+    // Precondition: result = a list of evaluated arguments
+    // Postcondition: primitive proceudre is applied to arguments and the result is
+    //                returned to the caller.
+
+    // Arithmetic:
+    static void add(Evaluator& evaluator);
+    static void subtract(Evaluator& evaluator);
+    static void divide(Evaluator& evaluator);
+    static void multiply(Evaluator& evaluator);
+
+    // Lists:
+    static void list(Evaluator& evaluator);
+    static void cons(Evaluator& evaluator);
+    static void isNull(Evaluator& evaluator);
+    static void isPair(Evaluator& evaluator);
+
+    // Meta:
+    static void eval(Evaluator& evaluator);
+    static void read(Evaluator& evaluator);
+    static void write(Evaluator& evaluator);
+
+    // Equality:
+    static void equal(Evaluator& evaluator);
+    static void eq(Evaluator& evaluator);
 };
 
 class Evaluator {
@@ -35,7 +62,7 @@ private:
 
     void bindToEvalSymToResult(Environment* env);
 
-    void bindAll(Environment* env); //, Object* params, Object* args);
+    void bindAll(Environment* env);
 
     Object* to_eval_temp;
     Environment* env_temp;

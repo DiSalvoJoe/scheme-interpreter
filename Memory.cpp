@@ -106,7 +106,7 @@ char* Memory::getBytes(size_t bytes) {
 }
 
 void Memory::clear() {
-    for (int i = 0; i < heap_end-heap_begin; i++) {
+    for (int i = 0; i < heap_end - heap_begin; i++) {
         heap_begin[i] = 0;
     }
     heap_ptr = heap_begin;

@@ -35,15 +35,15 @@ public:
     }
 
     void testDefine() {
-        assertEvalsTo("(begin (define test (if 1 2 3)) test)", "2");
-        assertEvalsTo("(define a 1)", "1");
-        assertEvalsTo("(begin (define a 1) a)", "1");
+        assertEvalsTo("(begin (define testDefine0 (if 1 2 3)) testDefine0)", "2");
+        assertEvalsTo("(define testDefine1 1)", "1");
+        assertEvalsTo("(begin (define testDefine2 1) testDefine2)", "1");
         assertEvalsTo("(begin (define (always-false) #f) (always-false))", "#f");
         assertEvalsTo("(begin (define (identity f) f) (identity \"hello\"))", "\"hello\"");
     }
 
     void testBegin() {
-        assertEvalsTo("(begin (define a (if 1 #f 3)) (if a 5 6))", "6");
+        assertEvalsTo("(begin (define testBegin0 (if 1 #f 3)) (if testBegin0 5 6))", "6");
     }
 
     void testLambda() {
@@ -80,7 +80,55 @@ public:
     }
 
     void testClosureWithCapturedVariable() {
-        assertEvalsTo("(begin (define make-if (lambda (p) (lambda (c) (if p c 0)))) ((make-if 1) 2))", "2");
+        assertEvalsTo("(begin (define make-if (lambda (p) (lambda (c) (if p c 0)))) ((make-if #f) 2))", "0");
+    }
+
+    void testAddition() {
+        assertEvalsTo("(+)", "0");
+        assertEvalsTo("(+ 1)", "1");
+        assertEvalsTo("(+ -1)", "-1");
+        assertEvalsTo("(+ 1.2)", "1.2");
+        assertEvalsTo("(+ 1 2 3)", "6");
+        assertEvalsTo("(+ 1.1 2 3)", "6.1");
+        assertEvalsTo("(+ 1 3 3.5)", "7.5");
+        assertEvalsTo("(+ (+ 5 7) (+) (+ 1 4) 1)", "18");
+        assertEvalsTo("(+ 1 -2 -6)", "-7");
+    }
+
+    void testSubtraction() {
+        assertEvalsTo("(-)", "0");
+        assertEvalsTo("(- 142)", "142");
+        assertEvalsTo("(- -142)", "-142");
+        assertEvalsTo("(- 142 1)", "141");
+        assertEvalsTo("(- 142 1 2)", "139");
+        assertEvalsTo("(- 142 1 -2)", "143");
+        assertEvalsTo("(- 142.4)", "142.4");
+        assertEvalsTo("(- 142 1.5)", "140.5");
+        assertEvalsTo("(- 142.5 2)", "140.5");
+        assertEvalsTo("(- (- 3 2 1) (-) (- 8 5 2 1) (- -9 -9))", "0");
+    }
+
+    void testMultiplication() {
+        assertEvalsTo("(*)", "1");
+        assertEvalsTo("(* 2)", "2");
+        assertEvalsTo("(* 2.4)", "2.4");
+        assertEvalsTo("(* 2.4 1.2)", "2.88");
+        assertEvalsTo("(* 2 2.4)", "4.8");
+        assertEvalsTo("(* 2 3)", "6");
+        assertEvalsTo("(* 2 -3)", "-6");
+        assertEvalsTo("(* (* 1) 2 3 (* 4 5))", "120");
+    }
+
+    void testDivision() {
+        assertEvalsTo("(/)", "1");
+        assertEvalsTo("(/ 2)", "2");
+        assertEvalsTo("(/ 2 3)", "0");
+        assertEvalsTo("(/ 7 3)", "2");
+        assertEvalsTo("(/ 3.0 2)", "1.5");
+        assertEvalsTo("(/ 3 2.0)", "1.5");
+        assertEvalsTo("(/ 3.0 2.0)", "1.5");
+        assertEvalsTo("(/ 6 3 2)", "1");
+        assertEvalsTo("(/ 6 -3 2)", "-1");
     }
 
 private:
@@ -94,9 +142,16 @@ private:
         Object* right = getSchemeString(memory,result);
         Reader right_reader(right);
 
-        TS_ASSERT(equal(evaluator.eval(left_reader.read(), nullptr), right_reader.read()));
-        ge.clear();
-        memory.clear();
+        Object* actual_result = evaluator.eval(left_reader.read(), nullptr);
+        if (equal(actual_result, right_reader.read())) {
+            TS_ASSERT(true);
+        } else {
+            std::cout << lhs << "  !=  " << result << std::endl;
+            std::cout << lhs << "  =  "; write(actual_result, std::cout); 
+            std::cout << std::endl;
+            TS_ASSERT(false);
+        }
+        //memory.clear(); messes with global environment
     }
 
 

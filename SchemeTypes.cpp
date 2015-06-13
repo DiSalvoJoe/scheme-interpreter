@@ -1,9 +1,17 @@
 #include "SchemeTypes.h"
 #include "Memory.h"
+#include "Evaluator.h"
 #include <iostream>
 
 /* Global Environment */
-GlobalEnvironment::GlobalEnvironment() {}
+GlobalEnvironment::GlobalEnvironment() {
+    SymbolTable& symbol_table = SymbolTable::getSymbolTable();
+    Memory& memory = Memory::getTheMemory();
+    bind(symbol_table.stringToSymbol("+"), getPrimProc(memory, &EvaluationProcedure::add));
+    bind(symbol_table.stringToSymbol("-"), getPrimProc(memory, &EvaluationProcedure::subtract));
+    bind(symbol_table.stringToSymbol("*"), getPrimProc(memory, &EvaluationProcedure::multiply));
+    bind(symbol_table.stringToSymbol("/"), getPrimProc(memory, &EvaluationProcedure::divide));
+}
 
 GlobalEnvironment& GlobalEnvironment::getGlobalEnvironment() {
     static GlobalEnvironment ge;
@@ -53,8 +61,9 @@ Environment* copy(Environment* env) {
 }
 
 Object* lookup(Environment* env, symbol identifier) {
-    while (env) {
-        Object* head = env->assoc_list;
+    Environment* current = env;
+    while (current) {
+        Object* head = current->assoc_list;
         while (head) {
             if (head->cell.car->cell.car->sym == identifier) {
                 return head->cell.car->cell.cdr;
@@ -62,7 +71,7 @@ Object* lookup(Environment* env, symbol identifier) {
                 head = head->cell.cdr;
             }
         }
-        env = env->enclosing_env;
+        current = current->enclosing_env;
     } 
 
     GlobalEnvironment& ge = GlobalEnvironment::getGlobalEnvironment();
@@ -198,7 +207,6 @@ Object* copy(Object* obj) {
             return result;
         case CONS:
             if (obj->marked == FORWARDED) {
-                std::cout << "FORWARDED CONS!" << std::endl;
                 return obj->cell.car; 
             }
             result = getObject(memory, CONS);
@@ -213,7 +221,6 @@ Object* copy(Object* obj) {
             break;
         case MACRO:
         case CLOSURE:
-            std::cout << "Copying closure " << std::endl;
             if (obj->marked == FORWARDED) {
                 return obj->cell.car; 
             }
@@ -226,8 +233,7 @@ Object* copy(Object* obj) {
             obj->marked = FORWARDED;
             return result;
         case PRIM_PROC:
-            result = getObject(memory, obj->type);
-            result->prim_proc = obj->prim_proc;
+            result = getPrimProc(memory, obj->prim_proc);
             return result;
     }
     return result;
@@ -241,5 +247,16 @@ void setFrame(Frame* frame, Object* to_eval, Object* result, Frame* ret, Environ
     frame->env = env;
     frame->cont = cont;
     frame->receive_return_as_list = as_list;
+}
+
+void write(Object* obj, std::ostream& os) {
+    switch (obj->type) {
+        case INT:
+            os << obj->integer << std::endl;
+        case FLOAT:
+            os << obj->floatN<< std::endl;
+        default:
+            return;
+    }
 }
 
