@@ -16,9 +16,6 @@ enum TOKEN {
 	FLOAT_NUM,
 	INTEGER,
 
-	VECTOR_BEGIN,
-	VECTOR_END,
-
 	BACKQUOTE,
 	UNQUOTE,
 	QUOTE,
@@ -55,8 +52,8 @@ private:
 	// Return a Token with token type = IDENTIFIER, FLOAT_NUM, or INTEGER and a corresponding scheme_symbol
 	Token getIdentifierStartingHere();
 
-	Token getNumber();
-	Token getSymbol();
+    Token getNumber();
+    Token getSymbol();
     Token getStringLiteral();
 
 	SymbolTable& symbol_table;

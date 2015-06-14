@@ -7,9 +7,16 @@
 #include <list>
 #include "SchemeTypes.h"
 
-typedef char* symbol;
-class Reader;
-class Evaluator;
+/* This file defines two types of memory (Memory, ChunkHeap), the symbol table, and
+   generic functions of the two types of memory for requesting objects, strings, closures etc.
+
+   Memory should be used by processes that generate garbage (evaluation). It uses
+   stop-and-copy garbage collection. It should be assumed that garbage collection can occur
+   after any request for bytes from it.
+
+   ChunkHeaps should be used by processes that don't generate garbage (the symbol table, parsing).
+*/
+
 
 // The following are generic functions on memory structures (Memory, ChunkHeap)
 // Because the type of each memory is known at compile time, it's better to use templates
@@ -116,9 +123,12 @@ public:
 
 	char* getBytes(size_t bytes);
 
+    // Ensures that there are at least <bytes> bytes that can be requested before
+    // garbage collection occurs. This is used internally, in getBytes, and by
+    // the Reader, which gets the size of the parsed object, ensures the memory
+    // has enough space for it, and copies it from a ChunkHeap to main memory.
     void requireBytes(size_t bytes);
 
-    void garbageCollect(size_t ensure_bytes);
 private:
 
 	Memory();
@@ -126,23 +136,31 @@ private:
 	Memory(Memory const&) = delete;
 	void operator=(Memory const&) = delete;
 
+    void garbageCollect(size_t ensure_bytes);
+
+    // Make heap_ptr point to the copy_heap, increasing its size if necessary. 
     void switchHeaps(size_t ensure_bytes);
+    void switchHeapPointers();
+
+    // Copy everything in the global environment and evaluator (call stack) into the new
+    // heap.
     void copyEverything();
+
+    // Decide whether the heap should grow or stay the same size during the next GC.
+    // Shrink the heap if less than 25% of it is being used.
     void changeGrowStatus();
 
-    void switchHeapPointers();
 
     constexpr static const double scale = 2.0; // factor to expand heap by
     static const int initial_heap_size = 1000000;
 
     enum {GROW, STAY} grow_heap;
     int heap_size;
-    char* heap_ptr;
+    char* heap_ptr; // everything between heap_begin and heap_ptr (exclusive) is in use;
     char* heap_begin;
-    char* heap_end;
+    char* heap_end; // everything between heap_ptr (inclusive) and heap_end is free
     char* copy_heap_begin;
 
-	Evaluator* evaluator;
 };
 
 class SymbolTable {
@@ -150,9 +168,14 @@ public:
 	 static SymbolTable& getSymbolTable();
 	~SymbolTable();
 
+    // Symbols are unique in memory. If the string has already been interned,
+    // return its location; otherwise, create space for it in the table and return
+    // the new address.
 	symbol stringToSymbol(const char* string_start, int str_len);
 	symbol stringToSymbol(const char* string);
-	char* symbolToString(symbol) const;
+
+    // Return the string of a symbol. 
+	const char* symbolToString(symbol) const;
 
 private:
 
@@ -167,7 +190,10 @@ private:
 	};
 
     ChunkHeap storage;
-	std::map<char*, symbol, cmp_str> table;
+
+    // char* -> symbol is just for clarity; to insert str into the table, copy
+    // str into the ChunkHeap storage (new_str), then create the entry table[new_str] = table[new_str]
+	std::map<const char*, symbol, cmp_str> table; 
 
 };
 

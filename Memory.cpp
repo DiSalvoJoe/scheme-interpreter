@@ -9,9 +9,16 @@
 #include <cmath>
 
 
+inline void zeroMemory(char* mem, int mem_size) {
+    for (int i = 0; i < mem_size; ++i) {
+        mem[i] = 0;
+    }
+}
+
 void* safeRealloc(void* array, size_t size) {
     array = realloc(array, size);
     assert(array);
+    zeroMemory((char*)array, size);
     return array;
 }
 
@@ -22,19 +29,15 @@ ChunkHeap::ChunkHeap() {
 ChunkHeap::~ChunkHeap() {
     for (auto&& c : chunks) {
         delete[] c->block;
-        c->block = nullptr;
         delete c;
-        c = nullptr;
     }
     chunks.clear();
 }
 
 void ChunkHeap::addChunk(int size) {
-    if (chunks.size() >= 1) {
-        std::cout << "adding a second chunk" << std::endl;
-    }
     chunk* c = new chunk;
     c->block = new char[size];
+    zeroMemory(c->block, size);
     c->index= 0;
     c->size = size;
     chunks.push_back(c);
@@ -74,18 +77,13 @@ Memory::Memory() {
 	grow_heap = STAY;
 }
 
-void zeroArray(char* mem, int mem_size) {
-    for (int i = 0; i < mem_size; ++i) {
-        mem[i] = 0;
-    }
-}
 
 void Memory::garbageCollect(size_t ensure_bytes) {
     std::cout << "Starting garbage collection." << std::endl;
 	switchHeaps(ensure_bytes);
     copyEverything();
     changeGrowStatus();
-    zeroArray(copy_heap_begin, heap_size);
+    zeroMemory(copy_heap_begin, heap_size);
 }
 
 void Memory::copyEverything() {
@@ -162,11 +160,7 @@ SymbolTable& SymbolTable::getSymbolTable() {
 
 
 SymbolTable::SymbolTable() {}
-SymbolTable::~SymbolTable() {
-	/*for (std::pair<char*, symbol> entry : table) {
-		delete[] entry.second;
-	}*/
-}
+SymbolTable::~SymbolTable() {}
 
 symbol SymbolTable::stringToSymbol(const char* string_start, int str_len) {
 	if (string_start == nullptr) {
@@ -193,7 +187,7 @@ symbol SymbolTable::stringToSymbol(const char* string) {
 	return stringToSymbol(string, strlen(string));
 }
 
-char* SymbolTable::symbolToString(symbol sym) const {
+const char* SymbolTable::symbolToString(symbol sym) const {
 	return sym;
 }
 

@@ -5,6 +5,10 @@
 #include <cstring>
 #include <ostream>
 
+/* This defines the basic objects in Scheme (objects, closures, environments,
+   call stack frames), and some functions that act on them.
+*/
+
 #define car(p) (p)->cell.car
 #define cdr(p) (p)->cell.cdr
 #define cadr(p) (p)->cell.cdr->cell.car
@@ -13,17 +17,19 @@
 #define cddr(p) (p)->cell.cdr->cell.cdr
 
 
-typedef char* symbol;
+typedef const char* symbol;
 struct Environment;
 class Evaluator;
 struct Frame;
 typedef void (*FrameProcedure)(Evaluator& evaluator);
 
+// For stop and copy garbage collection.
 enum MarkStatus {
 	UNMARKED = 0,
 	FORWARDED = 1
 };
 
+// Any object that the user can manipulate is of one of these types
 enum Type {
 	INT = 0,
 	FLOAT = 1,
@@ -70,6 +76,7 @@ struct Object {
 
 typedef struct Object Object;
 
+// Call stack frames. A continuation is a pointer to a frame.
 struct Frame {
     Object* to_eval;
     Object* result;
@@ -82,6 +89,8 @@ struct Frame {
 
 typedef struct Frame Frame;
 
+// Environments for closures. A map is used for the global environment,
+// but association lists but from objects are used for smaller environments.
 struct Environment {
     MarkStatus marked : 1;
     struct Environment* enclosing_env;
@@ -101,10 +110,10 @@ public:
 
     void copyAll();
 
-    void clear();
-
 private:
     GlobalEnvironment();
+    GlobalEnvironment(const GlobalEnvironment& other) = delete;
+    GlobalEnvironment& operator=(const GlobalEnvironment& other) = delete;
 
 	struct cmp_str  {
 		bool operator()(char const *a, char const *b) {

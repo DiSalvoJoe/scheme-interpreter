@@ -6,6 +6,8 @@
 
 class EvaluationProcedure {
 public:
+    // Call stack manipulations
+    // Detailed comments are with the implementation
     static void beginIf(Evaluator& evaluator);
     static void selectIf(Evaluator& evaluator);
     static void dispatchEval(Evaluator& evaluator);
@@ -62,26 +64,37 @@ public:
 
     Object* eval(Object* obj, Environment* env);
 
+    // Copy the call stack and every object in it into the new primary memory.
+    // Used for garbage collection.
     void copyAll();
 
     ~Evaluator() {}
 
 private:
     Evaluator();
+    Evaluator(const Evaluator& other) = delete;
+    Evaluator& operator=(const Evaluator& other) = delete;
 
+    // Return top_frame's result-value to its return frame's result field.
     void sendReturn();
 
+    // Bind top_frame->to_eval->sym to top_frame->result
     void bindToEvalSymToResult(Environment* env);
 
-    void bindAll(Environment* env);
-
+    // eval(obj, env) stores obj and env in these temporary fields before requesting
+    // a new top_frame from the memory. Then, if GC occurs, these temp fields will be updated
+    // (unlike the arguments passed to eval, which would go stale)
     Object* to_eval_temp;
     Environment* env_temp;
 
+    // the top of the call stack
     Frame* top_frame;
 
     Memory& memory;
     SymbolTable& symbol_table;
+
+    // Symbols for the special forms. These are used in dispatchEval. There is little overhead
+    // because symbol equality is pointer equality (i.e. integer equality)
     const symbol define_sym;
     const symbol set_sym;
     const symbol if_sym;

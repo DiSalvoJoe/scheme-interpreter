@@ -35,7 +35,7 @@ GlobalEnvironment& GlobalEnvironment::getGlobalEnvironment() {
 Object* GlobalEnvironment::lookup(symbol identifier) {
     auto found = table.find(identifier);
     if (found == table.end()) {
-        return nullptr;
+        return nullptr; // error handling occurs in evaluation
     } else {
         return found->second;
     }
@@ -46,16 +46,9 @@ void GlobalEnvironment::bind(symbol identifier, Object* rvalue) {
 }
 
 void GlobalEnvironment::copyAll() {
-    //std::cout << "Starting to copy global environment. " << std::endl;
     for (auto pair : table) {
-        //std::cout << "pair.second->type == " << pair.second->type << std::endl;
         pair.second = copy(pair.second);
     }
-    //std::cout << "Finished copy of global environment. " << std::endl;
-}
-
-void GlobalEnvironment::clear() {
-    table.clear();
 }
 
 /* Environments */
@@ -118,14 +111,7 @@ bool isSelfEvaluating(Object* obj) {
     if (obj == nullptr) {
         return true;
     }
-
-    switch (obj->type) {
-        case SYMBOL:
-        case CONS:
-            return false;
-        default:
-            return true;
-    }
+    return (! (obj->type == SYMBOL || obj->type == CONS));
 }
 
 bool asBool(Object* obj) {
@@ -137,31 +123,53 @@ bool asBool(Object* obj) {
 }
 
 bool equal(Object* left, Object* right) {
-    if (!left || !right) {
-        return left == right;
-    } else if (left->type != right->type) {
-        return false;
-    } else {
-        switch (left->type) {
-            case INT:
-                return left->integer == right->integer;
-            case FLOAT:
-                return left->floatN == right->floatN;
-            case CHAR:
-                return left->character == right->character;
-            case BOOL:
-                return left->boolean == right->boolean;
-            case STRING:
-                return strcmp(left->string, right->string) == 0;
-            case SYMBOL:
-                return left->sym == right->sym;
-            case CONS:
-                return equal(left->cell.car, right->cell.car) && equal(left->cell.cdr, right->cell.cdr);
-            default:
-                // There should be no default, but I haven't implemented continuations and macros etc. yet.
-                return false;
+    std::stack<Object*> lhs;
+    std::stack<Object*> rhs;
+    lhs.push(left);
+    rhs.push(right);
+    bool result = true;
+    while (!lhs.empty() && !rhs.empty() && result) {
+        left = lhs.top();
+        right = rhs.top();
+        lhs.pop();
+        rhs.pop();
+        if (!left || !right) {
+            result = (left == right);
+        } else if (left->type != right->type) {
+            result = false;
+        } else {
+            switch (left->type) {
+                case INT:
+                    result = (left->integer == right->integer);
+                    break;
+                case FLOAT:
+                    result = (left->floatN == right->floatN);
+                    break;
+                case CHAR:
+                    result = (left->character == right->character);
+                    break;
+                case BOOL:
+                    result = (left->boolean == right->boolean);
+                    break;
+                case STRING:
+                    result = (strcmp(left->string, right->string) == 0);
+                    break;
+                case SYMBOL:
+                    result = (left->sym == right->sym);
+                    break;
+                case CONS:
+                    lhs.push(cdr(left));
+                    lhs.push(car(left));
+                    rhs.push(cdr(right));
+                    rhs.push(car(right));
+                    break;
+                default:
+                    // = doesn't apply to other structures
+                    result = false;
+            }
         }
     }
+    return result;
 }
 
 size_t size(Object* obj) {
@@ -178,14 +186,16 @@ size_t size(Object* obj) {
         if (it) {
             switch (it->type) {
                 case STRING:
-                    result += strlen(obj->string);
+                    //result += strlen(obj->string);
+                    result += 200;
                     break;
                 case CONS:
                     result += sizeof(Object);
-                    if (it && it->type == CONS) {
-                        to_count.push(car(it));
-                        to_count.push(cdr(it));
-                    }
+                    // pushing the cdr before car is an optimization; most cons structures
+                    // will be linear lists, so the car, which will be popped first, won't grow 
+                    // the stack, but the cdr will.
+                    to_count.push(cdr(it));
+                    to_count.push(car(it));
                     break;
                 default:
                     result += sizeof(Object);
@@ -282,11 +292,6 @@ void write(Object* obj, std::ostream& os) {
             break;
         case CONS:
             os << "( ";
-            /*while (obj && obj->type == CONS) {
-                write(car(obj), os);
-                os << " ";
-                obj = cdr(obj);
-            }*/
         default:
             return;
     }

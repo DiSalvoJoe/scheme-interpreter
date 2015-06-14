@@ -14,8 +14,6 @@ Tokenizer::Tokenizer(Object* scheme_string, ChunkHeap& heap) :
 	tokens.push_back(std::pair<std::string, TOKEN>(")", LIST_END));
 	tokens.push_back(std::pair<std::string, TOKEN>("'", QUOTE));
 	tokens.push_back(std::pair<std::string, TOKEN>(".", INFIX_CONS));
-	tokens.push_back(std::pair<std::string, TOKEN>("#(", VECTOR_BEGIN));
-	tokens.push_back(std::pair<std::string, TOKEN>(")#", VECTOR_END));
 	tokens.push_back(std::pair<std::string, TOKEN>("`", BACKQUOTE));
 	tokens.push_back(std::pair<std::string, TOKEN>(",", UNQUOTE));
 	tokens.push_back(std::pair<std::string, TOKEN>("#t", TRUE_LITERAL));
