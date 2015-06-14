@@ -8,17 +8,20 @@ Done:
 
 4) Change Environments so that they don't leak memory (either do mark-and-sweep for environments, so their std::maps can be deleted, or change environments to use a structure of scheme objects, so stop-and-copy works for them.)
 
+5) Some Primitive Procedures (arithmetic, list, cons, eq?, =, parse, eval, apply)
+
+6) Tentative Garbage Collection
 
 To do:
 
-1) Primitive procedures (arithmetic, list, cons, eq?, =, >, <, etc. and read, eval, apply, call/cc)
+1) Some Primitive procedures (>, <, string->symbol, symbol->string, call/cc) 
 
 2) Continuations (because the evaluator's call stack is hardcoded, this shouldn't be too difficult. I just need to copy the call stack, which is more-or-less like copying a linked list).
 
-3) Garbage Collection (won't require any refactoring)
+3) Test Garbage Collection
 
 4) Macros (very easy -- apply macro's closure to unevaluated arguments, then evaluate the result).
 
 5) Infix Cons for Reader and dotted-tail argument lists.
 
-6) Rewrite copy functions to be iterative.
+6) Rewrite copy functions to be more iterative.
