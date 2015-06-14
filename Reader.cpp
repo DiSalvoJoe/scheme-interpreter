@@ -157,15 +157,16 @@ std::pair<Token, int> Tokenizer::getPrefixedToken() {
 }
 
 Reader::Reader(Object* obj) :
-    memory(ChunkHeap()),
     token_stream(Tokenizer(obj, memory))
      {}
 
 
 
 Object* Reader::read() {
-    //return dispatchRead();
-    return copy(dispatchRead());
+    Memory& mem = Memory::getTheMemory();
+    Object* result = dispatchRead();
+    mem.requireBytes(size(result));
+    return copy(result);
 }
 
 Object* Reader::dispatchRead() {

@@ -17,7 +17,6 @@ public:
     static void beginApply(Evaluator& evaluator);
     static void selectApply(Evaluator& evaluator);
     static void applyClosure(Evaluator& evaluator);
-    static void applyPrimitiveProcedure(Evaluator& evaluator);
     static void lambdaToClosure(Evaluator& evaluator);
 
     // Primitive Procedures
@@ -39,12 +38,22 @@ public:
 
     // Meta:
     static void eval(Evaluator& evaluator);
-    static void read(Evaluator& evaluator);
-    static void write(Evaluator& evaluator);
+    static void apply(Evaluator& evaluator);
+    static void parse(Evaluator& evaluator);
+    static void print(Evaluator& evaluator);
+    static void callcc(Evaluator& evaluator);
+    static void gc(Evaluator& evaluator);
 
     // Equality:
-    static void equal(Evaluator& evaluator);
-    static void eq(Evaluator& evaluator);
+    static void structuralEquality(Evaluator& evaluator);
+    static void pointerEquality(Evaluator& evaluator);
+    static void lessThan(Evaluator& evaluator);
+    static void greaterThan(Evaluator& evaluator);
+    static void schemeNot(Evaluator& evaluator);
+
+private:
+    static void argToBool(Evaluator& evaluator, bool (*predicate)(Object* obj));
+    static void argsToBool(Evaluator& evaluator, bool (*predicate)(Object* l, Object* r));
 };
 
 class Evaluator {
@@ -52,6 +61,8 @@ public:
     static Evaluator& getEvaluator();
 
     Object* eval(Object* obj, Environment* env);
+
+    void copyAll();
 
     ~Evaluator() {}
 
@@ -67,7 +78,6 @@ private:
     Object* to_eval_temp;
     Environment* env_temp;
 
-    Frame* final_frame;
     Frame* top_frame;
 
     Memory& memory;

@@ -1,17 +1,11 @@
 #include "Evaluator.h"
 #include "Memory.h"
 #include "SchemeTypes.h"
+#include "Reader.h"
 
 #include <iostream>
 #include <stdexcept>
 #include <string>
-
-#define car(p) (p)->cell.car
-#define cdr(p) (p)->cell.cdr
-#define cadr(p) (p)->cell.cdr->cell.car
-#define cdar(p) (p)->cell.car->cell.cdr
-#define caar(p) (p)->cell.car->cell.car
-#define cddr(p) (p)->cell.cdr->cell.cdr
 
 #define REQUIRE(p, str) if (!(p)) {throw std::logic_error((str));} 
 
@@ -19,7 +13,7 @@
  "cont" field, which a pointer to a function.
  Each cont manipulates the top frame and creates at most one additional frame.
  It would be easier to write the evaluation procedures recursively, instead of
- hardcoding the call stack, but there are several issues:
+ hardcoding the call stack, but there are several issues with that:
       -- Garbage collection can occur after any allocation, so temporary objects
          higher on the C++ call stack will become stale after GC, and there is no way
          to traverse the C++ call stack to update these temporary objects. With a custom
@@ -30,27 +24,30 @@
      --  Continuations require doing a deep copy of the call stack.
  */
 Object* Evaluator::eval(Object* obj, Environment* env) {
-    // To avoid stale pointers after GC
+    // To avoid stale pointers after GC, use these temp objects
     to_eval_temp = obj;
     env_temp = env;
-
-    final_frame = getFrame(memory);
+    // create the top_frame and initialize it
     top_frame = getFrame(memory);
-
-    setFrame(final_frame, nullptr, nullptr, nullptr, nullptr, nullptr, false);
-    setFrame(top_frame, to_eval_temp, nullptr, final_frame, env_temp, &EvaluationProcedure::dispatchEval, false);
-
+    setFrame(top_frame, to_eval_temp, nullptr, nullptr, env_temp, &EvaluationProcedure::dispatchEval, false);
     to_eval_temp = nullptr;
     env_temp = nullptr;
 
-    while (!final_frame->result) {
+    // transform the stack
+    while (top_frame->cont) {
         top_frame->cont(*this);
     }
 
-    Object* result = final_frame->result;
+    Object* result = top_frame->result;
     top_frame = nullptr;
-    final_frame = nullptr;
     return result;
+}
+
+// copyAll for garbage collection
+void Evaluator::copyAll() {
+    to_eval_temp = copy(to_eval_temp);
+    env_temp = copy(env_temp);
+    top_frame = copy(top_frame);
 }
 
 
@@ -59,6 +56,10 @@ Object* Evaluator::eval(Object* obj, Environment* env) {
 void Evaluator::sendReturn() {
     Frame* from = top_frame;
     Frame* to = from->return_frame;
+    if (!to) {
+        from->cont = nullptr;
+        return;
+    }
     if (from->receive_return_as_list) {
         from->result = reverseList(from->result);
     }
@@ -222,6 +223,7 @@ void EvaluationProcedure::selectApply(Evaluator& evaluator) {
             REQUIRE(false, "no continuation application yet");
 
         } else {
+            std::cout << proc->type << std::endl;
             REQUIRE(false, "Can apply only closures, primitive procedures, macros, and continuations.");
         }
         evaluator.top_frame = eval_args;
@@ -282,8 +284,6 @@ void EvaluationProcedure::applyClosure(Evaluator& evaluator) {
     top->to_eval = closure->body;
     top->cont = &EvaluationProcedure::evalSequence;
 }
-
-void EvaluationProcedure::applyPrimitiveProcedure(Evaluator& evaluator) {}
 
 // Precondition: to_eval = (<param list> <exp 1> ... < exp n>)
 // Postcondition: send a corresponding closure to the return frame
@@ -520,3 +520,86 @@ void EvaluationProcedure::multiply(Evaluator& evaluator) {
     evaluator.top_frame->result = product;
     evaluator.sendReturn();
 }
+
+// Lists
+void EvaluationProcedure::list(Evaluator& evaluator) {
+    evaluator.sendReturn();
+}
+
+void EvaluationProcedure::cons(Evaluator& evaluator) {
+    Object* args = evaluator.top_frame->result;
+    cdr(args) = cadr(args);
+    evaluator.sendReturn();
+}
+
+void EvaluationProcedure::argToBool(Evaluator& evaluator, bool (*predicate)(Object* obj)) {
+    Object* boolean = getObject(evaluator.memory, BOOL);
+    boolean->boolean = predicate(car(evaluator.top_frame->result));
+    evaluator.top_frame->result = boolean;
+    evaluator.sendReturn();
+}
+
+void EvaluationProcedure::isNull(Evaluator& evaluator) {
+    argToBool(evaluator, [](Object* obj) -> bool {return obj == nullptr;});
+}
+
+void EvaluationProcedure::isPair(Evaluator& evaluator) {
+    argToBool(evaluator, [](Object* obj) -> bool {return obj && (obj->type == CONS);});
+}
+
+// Meta
+void EvaluationProcedure::eval(Evaluator& evaluator) {
+    evaluator.top_frame->to_eval = car(evaluator.top_frame->result);
+    evaluator.top_frame->result = nullptr; 
+    evaluator.top_frame->cont = &EvaluationProcedure::dispatchEval;
+}
+
+void EvaluationProcedure::apply(Evaluator& evaluator) {
+    Object* exp = evaluator.top_frame->result;
+    Frame* top = evaluator.top_frame;
+    top->result = nullptr;
+    Object* proc = car(exp);
+    Object* args = cadr(exp);
+    if (proc->type == CLOSURE) {
+        top->cont = &EvaluationProcedure::applyClosure;
+        car(exp) = args;
+        cdr(exp) = proc;
+        top->result = exp;
+    } else if (proc->type == PRIM_PROC) {
+        top->cont = proc->prim_proc;
+        top->result = args;
+    } else {
+        REQUIRE(false, "Primitive procedure 'apply' can apply only closures and primitive procedures.");
+    }
+}
+
+void EvaluationProcedure::parse(Evaluator& evaluator) {
+    Reader reader(car(evaluator.top_frame->result));
+    Object* result = reader.read();
+    evaluator.top_frame->result = result;
+    evaluator.sendReturn();
+}
+
+void EvaluationProcedure::print(Evaluator& evaluator) {
+    write(car(evaluator.top_frame->result), std::cout);
+    evaluator.top_frame->result = nullptr;
+    evaluator.sendReturn();
+}
+
+// Equality
+void EvaluationProcedure::argsToBool(Evaluator& evaluator, bool (*predicate)(Object* l, Object* r)) {
+    Object* boolean = getObject(evaluator.memory, BOOL);
+    boolean->boolean = predicate(car(evaluator.top_frame->result), cadr(evaluator.top_frame->result));
+    evaluator.top_frame->result = boolean;
+    evaluator.sendReturn();
+}
+
+void EvaluationProcedure::structuralEquality(Evaluator& evaluator) {
+    argsToBool(evaluator, equal);
+}
+
+void EvaluationProcedure::pointerEquality(Evaluator& evaluator) {
+    argsToBool(evaluator, [](Object* l, Object* r) -> bool {return l == r;});
+}
+
+

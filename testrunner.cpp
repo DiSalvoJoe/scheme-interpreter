@@ -196,5 +196,47 @@ public:
  void runTest() { suite_EvaluatorTest.testDivision(); }
 } testDescription_suite_EvaluatorTest_testDivision;
 
+static class TestDescription_suite_EvaluatorTest_testList : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testList() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 134, "testList" ) {}
+ void runTest() { suite_EvaluatorTest.testList(); }
+} testDescription_suite_EvaluatorTest_testList;
+
+static class TestDescription_suite_EvaluatorTest_testCons : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testCons() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 141, "testCons" ) {}
+ void runTest() { suite_EvaluatorTest.testCons(); }
+} testDescription_suite_EvaluatorTest_testCons;
+
+static class TestDescription_suite_EvaluatorTest_testIsPair : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testIsPair() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 146, "testIsPair" ) {}
+ void runTest() { suite_EvaluatorTest.testIsPair(); }
+} testDescription_suite_EvaluatorTest_testIsPair;
+
+static class TestDescription_suite_EvaluatorTest_testIsNull : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testIsNull() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 154, "testIsNull" ) {}
+ void runTest() { suite_EvaluatorTest.testIsNull(); }
+} testDescription_suite_EvaluatorTest_testIsNull;
+
+static class TestDescription_suite_EvaluatorTest_testMetaEval : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testMetaEval() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 161, "testMetaEval" ) {}
+ void runTest() { suite_EvaluatorTest.testMetaEval(); }
+} testDescription_suite_EvaluatorTest_testMetaEval;
+
+static class TestDescription_suite_EvaluatorTest_testMetaApply : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testMetaApply() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 166, "testMetaApply" ) {}
+ void runTest() { suite_EvaluatorTest.testMetaApply(); }
+} testDescription_suite_EvaluatorTest_testMetaApply;
+
+static class TestDescription_suite_EvaluatorTest_testMetaRead : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testMetaRead() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 171, "testMetaRead" ) {}
+ void runTest() { suite_EvaluatorTest.testMetaRead(); }
+} testDescription_suite_EvaluatorTest_testMetaRead;
+
 #include <cxxtest/Root.cpp>
 const char* CxxTest::RealWorldDescription::_worldName = "cxxtest";

@@ -5,6 +5,14 @@
 #include <cstring>
 #include <ostream>
 
+#define car(p) (p)->cell.car
+#define cdr(p) (p)->cell.cdr
+#define cadr(p) (p)->cell.cdr->cell.car
+#define cdar(p) (p)->cell.car->cell.cdr
+#define caar(p) (p)->cell.car->cell.car
+#define cddr(p) (p)->cell.cdr->cell.cdr
+
+
 typedef char* symbol;
 struct Environment;
 class Evaluator;
@@ -126,6 +134,8 @@ size_t size(Object* list);
 Object* copy(Object* obj);
 
 Environment* copy(Environment* env);
+
+Frame* copy(Frame* frame);
 
 Object* lookup(Environment* env, symbol identifier);
 

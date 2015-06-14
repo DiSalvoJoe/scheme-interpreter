@@ -4,6 +4,7 @@
 #include <map>
 #include <cstring>
 #include <vector>
+#include <list>
 #include "SchemeTypes.h"
 
 typedef char* symbol;
@@ -55,7 +56,7 @@ template <class Mem>
 Object* getSchemeString(Mem& mem, const char* str) {
     int str_len = strlen(str);
     char* alloc = mem.getBytes(str_len + sizeof(Object) + 1);
-    strcpy(alloc, str);
+    strncpy(alloc, str, str_len);
     alloc[str_len] = '\0';
     Object* scheme_obj = (Object*)(alloc + str_len + 1);
     scheme_obj->type = STRING;
@@ -91,18 +92,20 @@ class ChunkHeap {
         void ungetBytes(size_t bytes);
 
     private:
-        static const int chunk_size = 64000; 
+        ChunkHeap(ChunkHeap const&) = delete;
+        void operator=(ChunkHeap const&) = delete;
 
-        void addChunk(int size = chunk_size);
+        static const int chunk_size = 1024;
 
         typedef struct chunk {
             char* block;
-            int block_index;
+            int index;
             int size;
         } chunk;
 
-        int current_chunk;
-        std::vector<chunk> chunks;
+        std::list<chunk*> chunks;
+
+        void addChunk(int size = chunk_size);
 };
 
 
@@ -113,7 +116,9 @@ public:
 
 	char* getBytes(size_t bytes);
 
-    void clear();
+    void requireBytes(size_t bytes);
+
+    void garbageCollect(size_t ensure_bytes);
 private:
 
 	Memory();
@@ -121,13 +126,16 @@ private:
 	Memory(Memory const&) = delete;
 	void operator=(Memory const&) = delete;
 
-    void garbageCollect(size_t ensure_bytes);
-    void switchHeaps();
+    void switchHeaps(size_t ensure_bytes);
+    void copyEverything();
+    void changeGrowStatus();
+
+    void switchHeapPointers();
 
     constexpr static const double scale = 2.0; // factor to expand heap by
     static const int initial_heap_size = 1000000;
 
-    enum {GROW, SHRINK, STAY} grow_heap;
+    enum {GROW, STAY} grow_heap;
     int heap_size;
     char* heap_ptr;
     char* heap_begin;

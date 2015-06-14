@@ -2,6 +2,10 @@
 #include "Memory.h"
 #include "Evaluator.h"
 #include <iostream>
+#include <assert.h>
+#include <set>
+#include <stack>
+
 
 /* Global Environment */
 GlobalEnvironment::GlobalEnvironment() {
@@ -11,6 +15,16 @@ GlobalEnvironment::GlobalEnvironment() {
     bind(symbol_table.stringToSymbol("-"), getPrimProc(memory, &EvaluationProcedure::subtract));
     bind(symbol_table.stringToSymbol("*"), getPrimProc(memory, &EvaluationProcedure::multiply));
     bind(symbol_table.stringToSymbol("/"), getPrimProc(memory, &EvaluationProcedure::divide));
+    bind(symbol_table.stringToSymbol("list"), getPrimProc(memory, &EvaluationProcedure::list));
+    bind(symbol_table.stringToSymbol("cons"), getPrimProc(memory, &EvaluationProcedure::cons));
+    bind(symbol_table.stringToSymbol("null?"), getPrimProc(memory, &EvaluationProcedure::isNull));
+    bind(symbol_table.stringToSymbol("pair?"), getPrimProc(memory, &EvaluationProcedure::isPair));
+    bind(symbol_table.stringToSymbol("eval"), getPrimProc(memory, &EvaluationProcedure::eval));
+    bind(symbol_table.stringToSymbol("apply"), getPrimProc(memory, &EvaluationProcedure::apply));
+    bind(symbol_table.stringToSymbol("parse"), getPrimProc(memory, &EvaluationProcedure::parse));
+    bind(symbol_table.stringToSymbol("print"), getPrimProc(memory, &EvaluationProcedure::print));
+    bind(symbol_table.stringToSymbol("="), getPrimProc(memory, &EvaluationProcedure::structuralEquality));
+    bind(symbol_table.stringToSymbol("eq?"), getPrimProc(memory, &EvaluationProcedure::pointerEquality));
 }
 
 GlobalEnvironment& GlobalEnvironment::getGlobalEnvironment() {
@@ -32,9 +46,12 @@ void GlobalEnvironment::bind(symbol identifier, Object* rvalue) {
 }
 
 void GlobalEnvironment::copyAll() {
+    //std::cout << "Starting to copy global environment. " << std::endl;
     for (auto pair : table) {
+        //std::cout << "pair.second->type == " << pair.second->type << std::endl;
         pair.second = copy(pair.second);
     }
+    //std::cout << "Finished copy of global environment. " << std::endl;
 }
 
 void GlobalEnvironment::clear() {
@@ -151,15 +168,32 @@ size_t size(Object* obj) {
     if (!obj) {
         return 0;
     }
-
-    switch (obj->type) {
-        case STRING:
-            return strlen(obj->string);
-        case CONS:
-            return sizeof(Object) + size(obj->cell.car) + size(obj->cell.cdr);
-        default:
-            return sizeof(Object);
+    size_t result = 0;
+    std::stack<Object*> to_count;
+    Object* it;
+    to_count.push(obj);
+    while (!to_count.empty()) {
+        it = to_count.top();
+        to_count.pop();
+        if (it) {
+            switch (it->type) {
+                case STRING:
+                    result += strlen(obj->string);
+                    break;
+                case CONS:
+                    result += sizeof(Object);
+                    if (it && it->type == CONS) {
+                        to_count.push(car(it));
+                        to_count.push(cdr(it));
+                    }
+                    break;
+                default:
+                    result += sizeof(Object);
+                    break;
+            }
+        }
     }
+    return result;
 }
 
 
@@ -171,7 +205,6 @@ Object* copy(Object* obj) {
     Memory& memory = Memory::getTheMemory();
     Object* result = nullptr;
     Object* temp = nullptr;
-    int len = 0;
     switch (obj->type) {
         case INT:
             result = getObject(memory, obj->type);
@@ -193,11 +226,7 @@ Object* copy(Object* obj) {
             if (obj->marked == FORWARDED) {
                 return obj->cell.car; 
             }
-            result = getObject(memory, obj->type);
-            len = strlen(obj->string)+1;
-            result->string = memory.getBytes(len);
-            result->string[len-1] = '\0';
-            strcpy(result->string, obj->string);
+            result = getSchemeString(memory, obj->string);
             obj->cell.car= result;
             obj->marked = FORWARDED;
             return result;
@@ -224,8 +253,7 @@ Object* copy(Object* obj) {
             if (obj->marked == FORWARDED) {
                 return obj->cell.car; 
             }
-            result = getObject(memory, obj->type);
-            result->closure = (Closure*)memory.getBytes(sizeof(Closure));
+            result = getClosure(memory);
             result->closure->body = copy(obj->closure->body);
             result->closure->parameters = copy(obj->closure->parameters);
             result->closure->env = copy(obj->closure->env);
@@ -240,6 +268,31 @@ Object* copy(Object* obj) {
 
 }
 
+void write(Object* obj, std::ostream& os) {
+    if (!obj) {
+        os << "()" << std::endl;
+        return;
+    }
+    switch (obj->type) {
+        case INT:
+            os << obj->integer;
+            break;
+        case FLOAT:
+            os << obj->floatN; 
+            break;
+        case CONS:
+            os << "( ";
+            /*while (obj && obj->type == CONS) {
+                write(car(obj), os);
+                os << " ";
+                obj = cdr(obj);
+            }*/
+        default:
+            return;
+    }
+}
+
+
 void setFrame(Frame* frame, Object* to_eval, Object* result, Frame* ret, Environment* env, FrameProcedure cont, bool as_list) {
     frame->to_eval = to_eval;
     frame->result = result;
@@ -249,14 +302,21 @@ void setFrame(Frame* frame, Object* to_eval, Object* result, Frame* ret, Environ
     frame->receive_return_as_list = as_list;
 }
 
-void write(Object* obj, std::ostream& os) {
-    switch (obj->type) {
-        case INT:
-            os << obj->integer << std::endl;
-        case FLOAT:
-            os << obj->floatN<< std::endl;
-        default:
-            return;
+Frame* copy(Frame* frame) {
+    if (!frame) {
+        return nullptr;
+    }
+    if (frame->marked == FORWARDED) {
+        return frame->return_frame;
+    } else {
+        Memory& memory = Memory::getTheMemory();
+        frame->marked = FORWARDED;
+        Frame* new_frame = getFrame(memory);
+        Frame* ret = frame->return_frame;
+        frame->return_frame = new_frame;
+        setFrame(new_frame, copy(frame->to_eval), copy(frame->result), copy(ret), copy(frame->env), frame->cont,
+                frame->receive_return_as_list);
+        return new_frame;
     }
 }
 
