@@ -97,7 +97,7 @@ Token Tokenizer::getSymbol() {
     int end_index = index;
 	while ((c = scheme_string->string[end_index]) &&
 			(isalnum(c) || c == '!' || c == '-' || c == '?' || c == '>' || c == '<'
-					|| c == '+' || c == '-' || c == '*' || c == '/')) {
+					|| c == '+' || c == '-' || c == '*' || c == '/' || c == '=')) {
 		++end_index;
 	}
 	symbol sym = symbol_table.stringToSymbol(scheme_string->string + index, end_index - index);

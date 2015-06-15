@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <set>
 #include <stack>
+#include <stdexcept>
 
 
 /* Global Environment */
@@ -17,6 +18,8 @@ GlobalEnvironment::GlobalEnvironment() {
     bind(symbol_table.stringToSymbol("/"), getPrimProc(memory, &EvaluationProcedure::divide));
     bind(symbol_table.stringToSymbol("list"), getPrimProc(memory, &EvaluationProcedure::list));
     bind(symbol_table.stringToSymbol("cons"), getPrimProc(memory, &EvaluationProcedure::cons));
+    bind(symbol_table.stringToSymbol("car"), getPrimProc(memory, &EvaluationProcedure::getCar));
+    bind(symbol_table.stringToSymbol("cdr"), getPrimProc(memory, &EvaluationProcedure::getCdr));
     bind(symbol_table.stringToSymbol("null?"), getPrimProc(memory, &EvaluationProcedure::isNull));
     bind(symbol_table.stringToSymbol("pair?"), getPrimProc(memory, &EvaluationProcedure::isPair));
     bind(symbol_table.stringToSymbol("eval"), getPrimProc(memory, &EvaluationProcedure::eval));
@@ -35,7 +38,11 @@ GlobalEnvironment& GlobalEnvironment::getGlobalEnvironment() {
 Object* GlobalEnvironment::lookup(symbol identifier) {
     auto found = table.find(identifier);
     if (found == table.end()) {
-        return nullptr; // error handling occurs in evaluation
+        std::string str;
+        str += "Error: symbol '";
+        str += identifier;
+        str += "' is unbound.";
+        throw std::logic_error(str);
     } else {
         return found->second;
     }
@@ -46,7 +53,7 @@ void GlobalEnvironment::bind(symbol identifier, Object* rvalue) {
 }
 
 void GlobalEnvironment::copyAll() {
-    for (auto pair : table) {
+    for (auto&& pair : table) {
         pair.second = copy(pair.second);
     }
 }
@@ -58,6 +65,8 @@ Environment* copy(Environment* env) {
     }
     if (env->marked == FORWARDED) {
         return env->enclosing_env;
+        std::cout << "FORWARDED ENVIRONMENT" << std::endl;
+        std::cout.flush();
     } else {
         Memory& memory = Memory::getTheMemory();
         Environment* copied = (Environment*)memory.getBytes(sizeof(Environment));
@@ -75,10 +84,10 @@ Object* lookup(Environment* env, symbol identifier) {
     while (current) {
         Object* head = current->assoc_list;
         while (head) {
-            if (head->cell.car->cell.car->sym == identifier) {
-                return head->cell.car->cell.cdr;
+            if (caar(head)->sym == identifier) {
+                return cdar(head);
             } else {
-                head = head->cell.cdr;
+                head = cdr(head);
             }
         }
         current = current->enclosing_env;
@@ -128,7 +137,7 @@ bool equal(Object* left, Object* right) {
     lhs.push(left);
     rhs.push(right);
     bool result = true;
-    while (!lhs.empty() && !rhs.empty() && result) {
+    while ( !(lhs.empty() || rhs.empty()) && result) {
         left = lhs.top();
         right = rhs.top();
         lhs.pop();
@@ -247,6 +256,8 @@ Object* copy(Object* obj) {
         case CONS:
             if (obj->marked == FORWARDED) {
                 return obj->cell.car; 
+                std::cout << "FORWARDED CONS" << std::endl;
+                std::cout.flush();
             }
             result = getObject(memory, CONS);
             temp = obj->cell.car;
@@ -262,6 +273,8 @@ Object* copy(Object* obj) {
         case CLOSURE:
             if (obj->marked == FORWARDED) {
                 return obj->cell.car; 
+                std::cout << "FORWARDED CLOSURE" << std::endl;
+                std::cout.flush();
             }
             result = getClosure(memory);
             result->closure->body = copy(obj->closure->body);
@@ -290,6 +303,12 @@ void write(Object* obj, std::ostream& os) {
         case FLOAT:
             os << obj->floatN; 
             break;
+        case STRING:
+            os << obj->string;
+            break;
+        case CHAR:
+            os << obj->character;
+            break;
         case CONS:
             os << "( ";
         default:
@@ -312,6 +331,8 @@ Frame* copy(Frame* frame) {
         return nullptr;
     }
     if (frame->marked == FORWARDED) {
+        std::cout << "FORWARDED FRAME" << std::endl;
+        std::cout.flush();
         return frame->return_frame;
     } else {
         Memory& memory = Memory::getTheMemory();
@@ -319,8 +340,12 @@ Frame* copy(Frame* frame) {
         Frame* new_frame = getFrame(memory);
         Frame* ret = frame->return_frame;
         frame->return_frame = new_frame;
-        setFrame(new_frame, copy(frame->to_eval), copy(frame->result), copy(ret), copy(frame->env), frame->cont,
-                frame->receive_return_as_list);
+        new_frame->return_frame = copy(ret);
+        new_frame->to_eval = copy(frame->to_eval);
+        new_frame->result = copy(frame->result);
+        new_frame->env = copy(frame->env);
+        new_frame->cont = frame->cont;
+        new_frame->receive_return_as_list = frame->receive_return_as_list;
         return new_frame;
     }
 }

@@ -15,10 +15,10 @@ inline void zeroMemory(char* mem, int mem_size) {
     }
 }
 
-void* safeRealloc(void* array, size_t size) {
-    array = realloc(array, size);
+char* safeRealloc(char* array, size_t size) {
+    delete[] array;
+    array = new char[size];
     assert(array);
-    zeroMemory((char*)array, size);
     return array;
 }
 
@@ -83,7 +83,6 @@ void Memory::garbageCollect(size_t ensure_bytes) {
 	switchHeaps(ensure_bytes);
     copyEverything();
     changeGrowStatus();
-    zeroMemory(copy_heap_begin, heap_size);
 }
 
 void Memory::copyEverything() {
@@ -106,7 +105,7 @@ void Memory::switchHeaps(size_t ensure_bytes) {
         heap_size *= scale;
     }
     heap_size += ensure_bytes;
-    copy_heap_begin = (char*)safeRealloc(copy_heap_begin, heap_size);
+    copy_heap_begin = safeRealloc(copy_heap_begin, heap_size);
     switchHeapPointers();
 }
 
@@ -120,7 +119,7 @@ void Memory::changeGrowStatus() {
         // shrink the copy heap
         grow_heap = STAY;
         heap_size /= scale;
-        copy_heap_begin = (char*)safeRealloc(copy_heap_begin, heap_size);
+        copy_heap_begin = safeRealloc(copy_heap_begin, heap_size);
         // switch the heaps and copy everything from old to new
         switchHeapPointers();
         copyEverything();
@@ -129,7 +128,7 @@ void Memory::changeGrowStatus() {
     } else {
         grow_heap = STAY;
     }
-    copy_heap_begin = (char*)safeRealloc(copy_heap_begin, heap_size);
+    copy_heap_begin = safeRealloc(copy_heap_begin, heap_size);
 }
 
 

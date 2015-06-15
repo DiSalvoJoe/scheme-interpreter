@@ -37,6 +37,8 @@ public:
     static void cons(Evaluator& evaluator);
     static void isNull(Evaluator& evaluator);
     static void isPair(Evaluator& evaluator);
+    static void getCar(Evaluator& evaluator);
+    static void getCdr(Evaluator& evaluator);
 
     // Meta:
     static void eval(Evaluator& evaluator);
@@ -62,7 +64,7 @@ class Evaluator {
 public:
     static Evaluator& getEvaluator();
 
-    Object* eval(Object* obj, Environment* env);
+    Object* eval(Object* obj);
 
     // Copy the call stack and every object in it into the new primary memory.
     // Used for garbage collection.
@@ -85,7 +87,6 @@ private:
     // a new top_frame from the memory. Then, if GC occurs, these temp fields will be updated
     // (unlike the arguments passed to eval, which would go stale)
     Object* to_eval_temp;
-    Environment* env_temp;
 
     // the top of the call stack
     Frame* top_frame;

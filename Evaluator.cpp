@@ -23,15 +23,13 @@
          existing one's continuation procedure instead.
      --  Continuations require doing a deep copy of the call stack.
  */
-Object* Evaluator::eval(Object* obj, Environment* env) {
+Object* Evaluator::eval(Object* obj) {
     // To avoid stale pointers after GC, use these temp objects
     to_eval_temp = obj;
-    env_temp = env;
     // create the top_frame and initialize it
     top_frame = getFrame(memory);
-    setFrame(top_frame, to_eval_temp, nullptr, nullptr, env_temp, &EvaluationProcedure::dispatchEval, false);
+    setFrame(top_frame, to_eval_temp, nullptr, nullptr, nullptr, &EvaluationProcedure::dispatchEval, false);
     to_eval_temp = nullptr;
-    env_temp = nullptr;
 
     // transform the stack
     while (top_frame->cont) {
@@ -46,7 +44,6 @@ Object* Evaluator::eval(Object* obj, Environment* env) {
 // copyAll for garbage collection
 void Evaluator::copyAll() {
     to_eval_temp = copy(to_eval_temp);
-    env_temp = copy(env_temp);
     top_frame = copy(top_frame);
 }
 
@@ -313,11 +310,6 @@ void EvaluationProcedure::dispatchEval(Evaluator& evaluator) {
         // Symbols are looked up in the environment
         if (to_eval->type == SYMBOL) {
             frame->result = lookup(frame->env, to_eval->sym); 
-            if (!frame->result) {
-                std::string str;
-                str += "Symbol "; str += to_eval->sym; str += " is unbound.";
-                REQUIRE(frame->result, str);
-            }
             evaluator.sendReturn();
             return;
         } 
@@ -529,6 +521,18 @@ void EvaluationProcedure::list(Evaluator& evaluator) {
 void EvaluationProcedure::cons(Evaluator& evaluator) {
     Object* args = evaluator.top_frame->result;
     cdr(args) = cadr(args);
+    evaluator.sendReturn();
+}
+
+void EvaluationProcedure::getCar(Evaluator& evaluator) {
+    Object* args = evaluator.top_frame->result;
+    evaluator.top_frame->result = caar(args);
+    evaluator.sendReturn();
+}
+
+void EvaluationProcedure::getCdr(Evaluator& evaluator) {
+    Object* args = evaluator.top_frame->result;
+    evaluator.top_frame->result = cdar(args);
     evaluator.sendReturn();
 }
 

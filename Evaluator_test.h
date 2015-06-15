@@ -16,7 +16,7 @@ public:
         Object* obj = getSchemeString(memory,"124");
         Reader reader(obj);
 
-        Object* evalled = evaluator.eval(reader.read(), nullptr);
+        Object* evalled = evaluator.eval(reader.read());
         TS_ASSERT_EQUALS(evalled->type, INT);
         TS_ASSERT_EQUALS(evalled->integer, 124);
     }
@@ -54,9 +54,9 @@ public:
         Object* obj = getSchemeString(memory,"(lambda (x) x) (lambda (x y z) (+ 1 2) 5) (x) (x y z) ((+ 1 2) 5)");
         Reader reader(obj);
 
-        Object* identity_closure = evaluator.eval(reader.read(), nullptr);
+        Object* identity_closure = evaluator.eval(reader.read());
         Object* old_body = identity_closure->closure->body;
-        Object* add_then_5 = evaluator.eval(reader.read(), nullptr);
+        Object* add_then_5 = evaluator.eval(reader.read());
         Object* x_list = reader.read();
         Object* xyz_list = reader.read();
         Object* plus12_list = reader.read();
@@ -138,6 +138,13 @@ public:
         assertEvalsTo("(begin (list) 1)", "1");
     }
 
+    void testCarCdr() {
+        assertEvalsTo("(car (cons 1 2))", "1");
+        assertEvalsTo("(cdr (cons 1 2))", "2");
+        assertEvalsTo("(car '(1 2 3))", "1");
+        assertEvalsTo("(cdr '(1 2 3))", "(2 3)");
+    }
+
     void testCons() {
         assertEvalsTo("(cons 1 '())", "(1)");
         assertEvalsTo("(cons 2 (cons 1 '()))", "(2 1)");
@@ -156,6 +163,7 @@ public:
         assertEvalsTo("(null? '())", "#t");
         assertEvalsTo("(null? #f)", "#f");
         assertEvalsTo("(null? '(1 2 3))", "#f");
+        assertEvalsTo("(begin (define testisnull '()) (null? testisnull))", "#t");
     }
 
     void testMetaEval() {
@@ -179,6 +187,17 @@ public:
         assertEvalsTo("(eval (parse \"(+ 1 2 3)\"))", "6");
     }
 
+    void testEq() {
+        assertEvalsTo("(eq? + +)", "#t");
+        assertEvalsTo("(eq? - +)", "#f");
+    }
+
+    void testEqual() {
+        assertEvalsTo("(= 1 1)", "#t");
+        assertEvalsTo("(= (+ 1 0) 1)", "#t");
+        assertEvalsTo("(= (+ 1 2 3) (+ 3 2 1))", "#t");
+    }
+
 
 
 private:
@@ -193,7 +212,7 @@ private:
         Object* right = getSchemeString(memory,result);
         Reader right_reader(right);
 
-        Object* actual_result = evaluator.eval(left_reader.read(), nullptr);
+        Object* actual_result = evaluator.eval(left_reader.read());
         if (equal(actual_result, right_reader.read())) {
             TS_ASSERT(true);
         } else {
