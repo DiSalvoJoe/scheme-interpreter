@@ -67,6 +67,7 @@ Object* getSchemeString(Mem& mem, const char* str) {
     alloc[str_len] = '\0';
     Object* scheme_obj = (Object*)(alloc + str_len + 1);
     scheme_obj->type = STRING;
+    scheme_obj->marked = UNMARKED;
     scheme_obj->string = alloc;
     return scheme_obj;
 }
