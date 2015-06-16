@@ -303,6 +303,7 @@ void write(Object* obj, std::ostream& os) {
             break;
         case BOOL:
             os << (obj->boolean ? "#t" : "#f");
+            break;
         case STRING:
             os << obj->string;
             break;
