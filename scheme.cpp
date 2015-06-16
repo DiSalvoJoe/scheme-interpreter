@@ -31,7 +31,17 @@ void runProgram(char* file_name) {
 }
 
 void repl() {
-    cout << "REPL will be implemented 'soon.'" << endl;
+    string line;
+    ChunkHeap prog_storage;
+    Evaluator& evaluator = Evaluator::getEvaluator();
+    cout << "scheme: >> ";
+    while (getline(cin, line)) {
+        Object* exp = getSchemeString(prog_storage, line.c_str());
+        Reader reader(exp);
+        write(evaluator.eval(reader.read()), cout);
+        cout << endl;
+        cout << "scheme: >> ";
+    }
 }
 
 int main(int argc, char** argv) {

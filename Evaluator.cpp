@@ -208,6 +208,7 @@ void EvaluationProcedure::selectApply(Evaluator& evaluator) {
         // evaluate the arguments, then move to application
         Frame* eval_args = getFrame(evaluator.memory);
         Frame* top = evaluator.top_frame; // in case GC occurred
+        proc = top->result; // in case GC occurred
         setFrame(eval_args, top->to_eval, nullptr, top, top->env, &evalList, true);
         if (proc->type == CLOSURE) {
             top->receive_return_as_list = true; // result will be a pair, car is evalled args and cdr is the proc
@@ -225,9 +226,26 @@ void EvaluationProcedure::selectApply(Evaluator& evaluator) {
         }
         evaluator.top_frame = eval_args;
     } else {
-        REQUIRE(false, "no macro application yet");
-        // macro eval: apply macro proc to unevaluated arguments, then call dispatchEval on it.
+        // Apply the macro's closure to the unevaluated arguments, then 
+        // go to applyMacro (which does dispatchEval on the result)
+        top->cont = &EvaluationProcedure::applyMacro;
+        Frame* transform = getFrame(evaluator.memory);
+        top = evaluator.top_frame; // in case GC occurred
+        proc = top->result; // in case GC occurred
+        car(top->to_eval) = top->to_eval;
+        cdr(top->to_eval) = proc;
+        //write(car(result), std::cout);
+        setFrame(transform, nullptr, top->to_eval, top, top->env, &EvaluationProcedure::applyClosure, false);
+        evaluator.top_frame = transform;
     }
+}
+
+void EvaluationProcedure::applyMacro(Evaluator& evaluator) {
+    Frame* top = evaluator.top_frame;
+    top->to_eval = top->result;
+    top->result = nullptr;
+    top->cont = &EvaluationProcedure::dispatchEval;
+    return;
 }
 
 // Precondition: result = (<evalled argument list> . <closure>)
@@ -236,12 +254,14 @@ void EvaluationProcedure::selectApply(Evaluator& evaluator) {
 //                in an evalSequence frame 
 void EvaluationProcedure::applyClosure(Evaluator& evaluator) {
     // need enough mem for a new environment, and assoc pairs for each argument
-    char* bytes = evaluator.memory.getBytes(sizeof(Environment) + 3*sizeof(Object)*size(car(evaluator.top_frame->result)));
+    Object* params = cdr(evaluator.top_frame->result)->closure->parameters;
+    char* bytes = evaluator.memory.getBytes(sizeof(Environment) + 
+            3*sizeof(Object)*size(params));
 
     Frame* top = evaluator.top_frame;
     Closure* closure = cdr(top->result)->closure;
     Object* args = car(top->result);
-    Object* params = closure->parameters;
+    params = closure->parameters;
     Environment* new_env = (Environment*)bytes;
     bytes += sizeof(Environment);
     new_env->enclosing_env = closure->env;
@@ -249,7 +269,7 @@ void EvaluationProcedure::applyClosure(Evaluator& evaluator) {
     new_env->marked = UNMARKED;
 
     // bind the parameters to the evaluated arguments
-    while (params && args) {
+    while (params) {
         // need three objects: a symbol object for the identifier,
         // a pair object where car(pair ) = symbol object and cdr(pair) = argument
         // and an entry object where car(entry) = pair and cdr(entry) = rest of entries
@@ -264,14 +284,30 @@ void EvaluationProcedure::applyClosure(Evaluator& evaluator) {
         car(entry)= pair;
         car(pair)= sym_obj;
 
-        symbol identifier = car(params)->sym;
-        Object* rvalue = car(args);
+        symbol identifier;
+        Object* rvalue;
+        if (params->type == CONS) {
+            identifier = car(params)->sym;
+            REQUIRE(args && args->type == CONS, 
+                    "Not enough or invalid arguments in closure application.");
+            rvalue = car(args);
+        } 
+        // Dotted-tail parameter list
+        else {
+            identifier = params->sym;
+            rvalue = args;
+        }
         car(pair)->sym = identifier;
         cdr(pair)= rvalue;
         cdr(entry)= new_env->assoc_list;
         new_env->assoc_list = entry;
-        params = cdr(params);
-        args = cdr(args);
+        if (params->type == CONS) {
+            REQUIRE(args, "Too few arguments in closure application.");
+            params = cdr(params);
+            args = cdr(args);
+        } else {
+            params = nullptr;
+        }
     }
 
     // evaluate the body sequence in the new environment
@@ -293,6 +329,12 @@ void EvaluationProcedure::lambdaToClosure(Evaluator& evaluator) {
     closure_obj->closure->body = cdr(list);
     evaluator.top_frame->result = closure_obj;
     evaluator.top_frame->to_eval = nullptr;
+    evaluator.sendReturn();
+}
+
+void EvaluationProcedure::closureToMacro(Evaluator& evaluator) {
+    REQUIRE(evaluator.top_frame->result->type == CLOSURE, "Macros must be closures.");
+    evaluator.top_frame->result->type = MACRO;
     evaluator.sendReturn();
 }
 
@@ -328,6 +370,18 @@ void EvaluationProcedure::dispatchEval(Evaluator& evaluator) {
                 return;
             }
 
+            else if (car == evaluator.unquote_sym) {
+                frame->to_eval = cadr(to_eval);
+                return;
+            }
+
+            else if (car == evaluator.backquote_sym) {
+                frame->to_eval = cadr(to_eval);
+                frame->cont = (frame->to_eval->type == CONS) ? &EvaluationProcedure::evalList :
+                    &EvaluationProcedure::dispatchEval;
+                return;
+            }
+
             else if (car == evaluator.if_sym) {
                 frame->cont = &EvaluationProcedure::beginIf;
                 frame->to_eval = cdr(to_eval);
@@ -337,6 +391,17 @@ void EvaluationProcedure::dispatchEval(Evaluator& evaluator) {
             else if (car == evaluator.define_sym) {
                 frame->cont = &EvaluationProcedure::beginDefine;
                 frame->to_eval = cdr(to_eval);
+                return;
+            }
+
+            else if (car == evaluator.defmacro_sym) {
+                Frame* closure_to_macro_frame = getFrame(evaluator.memory);
+                frame = evaluator.top_frame;
+                frame->cont = &EvaluationProcedure::closureToMacro;
+                setFrame(closure_to_macro_frame, cdr(frame->to_eval), nullptr, frame,
+                        frame->env, &EvaluationProcedure::beginDefine, false);
+                frame->to_eval = nullptr;
+                evaluator.top_frame = closure_to_macro_frame;
                 return;
             }
                 
@@ -374,7 +439,10 @@ Evaluator::Evaluator() :
     if_sym(symbol_table.stringToSymbol("if")),
     quote_sym(symbol_table.stringToSymbol("quote")),
     lambda_sym(symbol_table.stringToSymbol("lambda")),
-    begin_sym(symbol_table.stringToSymbol("begin"))
+    begin_sym(symbol_table.stringToSymbol("begin")),
+    unquote_sym(symbol_table.stringToSymbol("unquote")),
+    backquote_sym(symbol_table.stringToSymbol("backquote")),
+    defmacro_sym(symbol_table.stringToSymbol("defmacro"))
 {}
 
 Evaluator& Evaluator::getEvaluator() {

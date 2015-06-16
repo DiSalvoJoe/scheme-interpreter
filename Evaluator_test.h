@@ -73,6 +73,60 @@ public:
         TS_ASSERT(equal(add_then_5->closure->body, plus12_list));
     }
 
+    void testDottedLambda() {
+        Memory& memory = Memory::getTheMemory();
+		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
+        Evaluator& evaluator = Evaluator::getEvaluator();
+
+        Object* obj = getSchemeString(memory,"(lambda (x . y) x) (x . y)");
+        Reader reader(obj);
+
+        Object* identity_closure = evaluator.eval(reader.read());
+        Object* pair = reader.read();
+
+        TS_ASSERT_EQUALS(identity_closure->type, CLOSURE);
+
+        Object* params = identity_closure->closure->parameters;
+        Object* body = identity_closure->closure->body;
+        TS_ASSERT_EQUALS(params->type, CONS);
+        TS_ASSERT_EQUALS(car(params)->type, SYMBOL);
+        TS_ASSERT_EQUALS(cdr(params)->type, SYMBOL);
+        TS_ASSERT_EQUALS(car(params)->sym, symbol_table.stringToSymbol("x"));
+        TS_ASSERT_EQUALS(cdr(params)->sym, symbol_table.stringToSymbol("y"));
+        TS_ASSERT_EQUALS(identity_closure->closure->env, nullptr);
+        TS_ASSERT(body);
+        TS_ASSERT_EQUALS(body->type, CONS);
+        TS_ASSERT_EQUALS(car(body)->type, SYMBOL);
+        TS_ASSERT_EQUALS(car(body)->sym, symbol_table.stringToSymbol("x"));
+        TS_ASSERT(equal(params, pair));
+    }
+
+    void testDefmacro() {
+        Memory& memory = Memory::getTheMemory();
+		SymbolTable& symbol_table = SymbolTable::getSymbolTable();
+        Evaluator& evaluator = Evaluator::getEvaluator();
+
+        Object* obj = getSchemeString(memory,
+                "(begin (defmacro (testdefmacro p c a) (if p c a)) testdefmacro) (p c a) ((if p c a))");
+        Reader reader(obj);
+
+        Object* macro = evaluator.eval(reader.read());
+        Object* macro_params = reader.read();
+        Object* macro_body = reader.read();
+
+        TS_ASSERT(macro); 
+        TS_ASSERT(macro_params); 
+        TS_ASSERT(macro_body);
+
+        TS_ASSERT_EQUALS(macro->type, MACRO);
+        TS_ASSERT(equal(macro_params, macro->closure->parameters));
+        TS_ASSERT(equal(macro_body, macro->closure->body));
+
+    }
+
+    void testDottedLambdaRead() {
+        assertEvalsTo("(list 'lambda (cons 'x 'y) 'x)", "(lambda (x . y) x)");
+    }
 
     void testSimpleClosures() {
         assertEvalsTo("(begin (define id (lambda (x) x)) (id 5))", "5");
@@ -198,6 +252,27 @@ public:
         assertEvalsTo("(= (+ 1 2 3) (+ 3 2 1))", "#t");
     }
 
+    void testBackQuote() {
+        assertEvalsTo("`(1 2 3)", "(1 2 3)");
+        assertEvalsTo("`(1 (+ 2 5) 3)", "(1 (+ 2 5) 3)");
+        assertEvalsTo("`(1 ,(+ 2 5) 3)", "(1 7 3)");
+        assertEvalsTo("`abc", "abc");
+        assertEvalsTo("`123", "123");
+    }
+
+    void testDottedTailParamList() {
+        assertEvalsTo( "(begin (define (add-up . ls) (apply + ls)) (add-up 1 2 3))", "6");
+        assertEvalsTo( "(add-up)", "0");
+        assertEvalsTo( "(add-up 1)", "1");
+        assertEvalsTo( "(add-up 1 2)", "3");
+        assertEvalsTo("( (lambda (x . ls) (cons x ls)) 1 2 3)", "(1 2 3)");
+    }
+
+    void testMacroApplication() {
+        assertEvalsTo("(begin (defmacro (mif p c a) `(if ,p ,c ,a)) #t", "#t");
+        //assertEvalsTo("(begin (defmacro (when p . stms) `(if ,p ,(cons 'begin stms) '())) #t)", "#t");
+        assertEvalsTo("(mif #t 1 2)", "1");
+    }
 
 
 private:

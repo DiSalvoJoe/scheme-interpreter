@@ -1,6 +1,10 @@
 Done:
 
-1) Reader and Tokenizer (except infix cons -- (1 . 2))
+1) Reader and Tokenizer 
+
+1.5) Infix Cons for Reader and dotted-tail argument lists, like (define (add-up . ls) (apply + ls)), (add-up 1 2 3) = 6
+
+1.75) Backquote and unquote, like `(1 ,(+ 5 7) (+ 1 2)) = (1 12 (+ 1 2))
 
 2) Symbol Table and outline of Memory (although garbage collection isn't implemented, everything is written in a way that assumes garbage collection can occur after any allocation. Therefore, implementing garbage collection will be easy -- it will just involve adding functionality to Memory).
 
@@ -10,7 +14,7 @@ Done:
 
 5) Some Primitive Procedures (arithmetic, list, cons, eq?, =, parse, eval, apply)
 
-6) Tentative Garbage Collection
+6) Garbage Collection (there might be one or two stale pointer bugs)
 
 To do:
 
@@ -22,6 +26,4 @@ To do:
 
 4) Macros (very easy -- apply macro's closure to unevaluated arguments, then evaluate the result).
 
-5) Infix Cons for Reader and dotted-tail argument lists.
-
-6) Rewrite copy functions to be more iterative.
+5) Rewrite copy functions to be more iterative to optimize GC.

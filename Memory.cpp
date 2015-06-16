@@ -79,10 +79,11 @@ Memory::Memory() {
 
 
 void Memory::garbageCollect(size_t ensure_bytes) {
-    std::cout << "Starting garbage collection." << std::endl;
+    std::cout << "Starting garbage collection." ;
 	switchHeaps(ensure_bytes);
     copyEverything();
     changeGrowStatus();
+    std:: cout << "  New Heap Size = " << heap_size << std::endl;
 }
 
 void Memory::copyEverything() {
@@ -114,8 +115,8 @@ void Memory::changeGrowStatus() {
     // If more than 75% is used, Grow it.
     // Otherwise (26% - 74%), keep it the same.
     // These assume that scale = 2.
-    float used = (heap_end - heap_begin) / (float)heap_size;
-    if (used < 0.25) {
+    float used = 1 - (heap_end - heap_ptr) / (float)heap_size;
+    if (used < 0.25 && (0.25*heap_size > initial_heap_size)) {
         // shrink the copy heap
         grow_heap = STAY;
         heap_size /= scale;

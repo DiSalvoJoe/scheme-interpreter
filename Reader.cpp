@@ -1,8 +1,10 @@
 #include <cctype>
 #include <string>
+#include <assert.h>
 
 #include "Reader.h"
 #include "SchemeTypes.h"
+
 
 Tokenizer::Tokenizer(Object* scheme_string, ChunkHeap& heap) :
 	symbol_table(SymbolTable::getSymbolTable()),
@@ -162,14 +164,15 @@ Reader::Reader(Object* obj) :
 
 Object* Reader::read() {
     Memory& mem = Memory::getTheMemory();
-    Object* result = dispatchRead();
+    Object* result = dispatchRead().first;
     mem.requireBytes(size(result));
     return copy(result);
 }
 
-Object* Reader::dispatchRead() {
+std::pair<Object*,bool> Reader::dispatchRead() {
     Token tok = token_stream.nextToken();
     Object* result = nullptr;
+    bool infix_cons = false;
     switch(tok.token) {
         case LIST_BEGIN:
             result = readList();
@@ -177,38 +180,90 @@ Object* Reader::dispatchRead() {
         case QUOTE:
             result = readQuote();
             break;
+        case UNQUOTE:
+            result = readUnquote();
+            break;
+        case BACKQUOTE:
+            result = readBackQuote();
+            break;
         case LIST_END:
             break;
         case END_TOKEN:
             break;
         case NOTHING:
             break;
+        case INFIX_CONS:
+            infix_cons = true;
+            result = dispatchRead().first;
+            break;
         default:
             result = tok.scheme_symbol;
+            break;
     }
-    return result;
+    return std::pair<Object*,bool>(result, infix_cons);
 }
 
 Object* Reader::readList() {
     Object* result = nullptr;
     Object* element = nullptr;
-    while ((element = dispatchRead())) {
+    std::pair<Object*,bool> p;
+    p = dispatchRead();
+    while (p.first && !p.second) {
+        element = p.first;
         Object* link = getObject(memory, CONS);
         link->cell.cdr = result;
         link->cell.car = element;
         result = link;
+        p = dispatchRead();
+    } 
+    if (p.first && p.second) {
+        Object* tail = result;
+        result = reverseList(result);
+        cdr(tail) = p.first;
+        p = dispatchRead();
+        assert(!p.first);
+    } else {
+        result = reverseList(result);
     }
-    return reverseList(result);
+    return result;
+}
+
+Object* Reader::readBackQuote() {
+    SymbolTable& symbol_table = SymbolTable::getSymbolTable();
+    symbol unquote_sym = symbol_table.stringToSymbol("unquote");
+    Object* result = dispatchRead().first;
+    if (result && result->type != CONS) {
+        result = package(result, "quote");
+    } else if (result && result->type == CONS) {
+        Object* cur = result;
+        while (cur && cur->type == CONS) {
+            if (! (car(cur)->type == CONS && caar(cur)->type == SYMBOL
+                        && caar(cur)->sym == unquote_sym)) {
+                car(cur) = package(car(cur), "quote");
+            }
+            cur = cdr(cur);
+        }
+        result = package(reverseList(result), "backquote");
+    }
+    return result;
 }
 
 Object* Reader::readQuote() {
+    return package(dispatchRead().first, "quote");
+}
+
+Object* Reader::readUnquote() {
+    return package(dispatchRead().first, "unquote");
+}
+
+Object* Reader::package(Object* obj, const char* sym) {
     SymbolTable& symbol_table = SymbolTable::getSymbolTable();
-    Object* quote_head = getObject(memory, CONS);
-    Object* quote_tail = getObject(memory, CONS);
-    quote_head->cell.car = getObject(memory, SYMBOL);
-    quote_head->cell.car->sym = symbol_table.stringToSymbol("quote");
-    quote_head->cell.cdr = quote_tail;
-    quote_tail->cell.car = dispatchRead();
-    quote_tail->cell.cdr = nullptr;
-    return quote_head;
+    Object* package_head = getObject(memory, CONS);
+    Object* package_tail = getObject(memory, CONS);
+    package_head->cell.car = getObject(memory, SYMBOL);
+    package_head->cell.car->sym = symbol_table.stringToSymbol(sym);
+    package_head->cell.cdr = package_tail;
+    package_tail->cell.car = obj;
+    package_tail->cell.cdr = nullptr;
+    return package_head;
 }

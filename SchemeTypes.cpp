@@ -65,8 +65,6 @@ Environment* copy(Environment* env) {
     }
     if (env->marked == FORWARDED) {
         return env->enclosing_env;
-        std::cout << "FORWARDED ENVIRONMENT" << std::endl;
-        std::cout.flush();
     } else {
         Memory& memory = Memory::getTheMemory();
         Environment* copied = (Environment*)memory.getBytes(sizeof(Environment));
@@ -106,7 +104,7 @@ Object* reverseList(Object* obj) {
     Object* prev = nullptr;
     Object* cur = obj;
     Object* next = obj->cell.cdr;
-    while (next) {
+    while (next && next->type == CONS) {
         cur->cell.cdr = prev;
         prev = cur;
         cur = next;
@@ -256,8 +254,6 @@ Object* copy(Object* obj) {
         case CONS:
             if (obj->marked == FORWARDED) {
                 return obj->cell.car; 
-                std::cout << "FORWARDED CONS" << std::endl;
-                std::cout.flush();
             }
             result = getObject(memory, CONS);
             temp = obj->cell.car;
@@ -273,8 +269,6 @@ Object* copy(Object* obj) {
         case CLOSURE:
             if (obj->marked == FORWARDED) {
                 return obj->cell.car; 
-                std::cout << "FORWARDED CLOSURE" << std::endl;
-                std::cout.flush();
             }
             result = getClosure(memory);
             result->closure->body = copy(obj->closure->body);
@@ -296,6 +290,7 @@ void write(Object* obj, std::ostream& os) {
         os << "()" << std::endl;
         return;
     }
+    Object* cur = nullptr;
     switch (obj->type) {
         case INT:
             os << obj->integer;
@@ -303,16 +298,42 @@ void write(Object* obj, std::ostream& os) {
         case FLOAT:
             os << obj->floatN; 
             break;
-        case STRING:
-            os << obj->string;
-            break;
         case CHAR:
             os << obj->character;
             break;
+        case BOOL:
+            os << (obj->boolean ? "#t" : "#f");
+        case STRING:
+            os << obj->string;
+            break;
+        case SYMBOL:
+            os << obj->sym;
+            break;
         case CONS:
-            os << "( ";
+            os << "(";
+            cur = obj;
+            while (cur && cur->type == CONS) {
+                write(car(cur), os);
+                cur = cdr(cur);
+                if (cur) {
+                    os << " ";
+                    if (cur->type != CONS) {
+                        os << ". ";
+                        write(cur, os);
+                    }
+                }
+            }
+            os << ")";
+            break;
+        case CONTINUATION:
+            break;
+        case MACRO:
+        case CLOSURE:
+            os << (obj->type == CLOSURE ? "Closure" : "Macro") << " at " << obj->closure << std::endl;
+        case PRIM_PROC:
+            os << "Primitive Procedure"; 
         default:
-            return;
+            break;
     }
 }
 
@@ -331,8 +352,6 @@ Frame* copy(Frame* frame) {
         return nullptr;
     }
     if (frame->marked == FORWARDED) {
-        std::cout << "FORWARDED FRAME" << std::endl;
-        std::cout.flush();
         return frame->return_frame;
     } else {
         Memory& memory = Memory::getTheMemory();

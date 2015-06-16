@@ -298,6 +298,38 @@ public:
         TS_ASSERT_EQUALS(quoted_list->cell.cdr->cell.cdr, nullptr);
     }
 
+    void testInfixCons() {
+        Memory& memory = Memory::getTheMemory();
+        Object* pair = getSchemeString(memory, "(1 . 2");
+        Reader reader (pair);
+        Object* r = reader.read();
+        TS_ASSERT(r);
+        TS_ASSERT_EQUALS(r->type, CONS);
+        TS_ASSERT_EQUALS(car(r)->integer, 1);
+        TS_ASSERT_EQUALS(cdr(r)->integer, 2);
+    }
+
+    void testInfixCons2() {
+        Memory& memory = Memory::getTheMemory();
+        Object* pair = getSchemeString(memory, "(1 2 . 3");
+        Reader reader (pair);
+        Object* r = reader.read();
+        TS_ASSERT(r);
+        TS_ASSERT_EQUALS(r->type, CONS);
+        TS_ASSERT_EQUALS(car(r)->integer, 1);
+        r = cdr(r);
+
+        TS_ASSERT(r);
+        TS_ASSERT_EQUALS(r->type, CONS);
+        TS_ASSERT_EQUALS(car(r)->integer, 2);
+        r = cdr(r);
+
+        TS_ASSERT(r);
+        TS_ASSERT_EQUALS(r->type, INT);
+        TS_ASSERT_EQUALS(r->integer, 3);
+    }
+
+
 
 
 

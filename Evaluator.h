@@ -19,7 +19,9 @@ public:
     static void beginApply(Evaluator& evaluator);
     static void selectApply(Evaluator& evaluator);
     static void applyClosure(Evaluator& evaluator);
+    static void applyMacro(Evaluator& evaluator);
     static void lambdaToClosure(Evaluator& evaluator);
+    static void closureToMacro(Evaluator& evaluator);
 
     // Primitive Procedures
     // Precondition: result = a list of evaluated arguments
@@ -102,6 +104,9 @@ private:
     const symbol quote_sym;
     const symbol lambda_sym;
     const symbol begin_sym;
+    const symbol unquote_sym;
+    const symbol backquote_sym;
+    const symbol defmacro_sym;
 
     friend class EvaluationProcedure;
 };

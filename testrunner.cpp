@@ -123,6 +123,18 @@ public:
  void runTest() { suite_ReaderTest.testQuoteList(); }
 } testDescription_suite_ReaderTest_testQuoteList;
 
+static class TestDescription_suite_ReaderTest_testInfixCons : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_ReaderTest_testInfixCons() : CxxTest::RealTestDescription( Tests_ReaderTest, suiteDescription_ReaderTest, 301, "testInfixCons" ) {}
+ void runTest() { suite_ReaderTest.testInfixCons(); }
+} testDescription_suite_ReaderTest_testInfixCons;
+
+static class TestDescription_suite_ReaderTest_testInfixCons2 : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_ReaderTest_testInfixCons2() : CxxTest::RealTestDescription( Tests_ReaderTest, suiteDescription_ReaderTest, 312, "testInfixCons2" ) {}
+ void runTest() { suite_ReaderTest.testInfixCons2(); }
+} testDescription_suite_ReaderTest_testInfixCons2;
+
 #include "/home/j/prog/scheme_interpreter/scheme interpreter/Evaluator_test.h"
 
 static EvaluatorTest suite_EvaluatorTest;
@@ -160,101 +172,137 @@ public:
  void runTest() { suite_EvaluatorTest.testLambda(); }
 } testDescription_suite_EvaluatorTest_testLambda;
 
+static class TestDescription_suite_EvaluatorTest_testDottedLambda : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testDottedLambda() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 76, "testDottedLambda" ) {}
+ void runTest() { suite_EvaluatorTest.testDottedLambda(); }
+} testDescription_suite_EvaluatorTest_testDottedLambda;
+
+static class TestDescription_suite_EvaluatorTest_testDefmacro : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testDefmacro() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 104, "testDefmacro" ) {}
+ void runTest() { suite_EvaluatorTest.testDefmacro(); }
+} testDescription_suite_EvaluatorTest_testDefmacro;
+
+static class TestDescription_suite_EvaluatorTest_testDottedLambdaRead : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testDottedLambdaRead() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 127, "testDottedLambdaRead" ) {}
+ void runTest() { suite_EvaluatorTest.testDottedLambdaRead(); }
+} testDescription_suite_EvaluatorTest_testDottedLambdaRead;
+
 static class TestDescription_suite_EvaluatorTest_testSimpleClosures : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_EvaluatorTest_testSimpleClosures() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 77, "testSimpleClosures" ) {}
+ TestDescription_suite_EvaluatorTest_testSimpleClosures() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 131, "testSimpleClosures" ) {}
  void runTest() { suite_EvaluatorTest.testSimpleClosures(); }
 } testDescription_suite_EvaluatorTest_testSimpleClosures;
 
 static class TestDescription_suite_EvaluatorTest_testClosureWithCapturedVariable : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_EvaluatorTest_testClosureWithCapturedVariable() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 82, "testClosureWithCapturedVariable" ) {}
+ TestDescription_suite_EvaluatorTest_testClosureWithCapturedVariable() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 136, "testClosureWithCapturedVariable" ) {}
  void runTest() { suite_EvaluatorTest.testClosureWithCapturedVariable(); }
 } testDescription_suite_EvaluatorTest_testClosureWithCapturedVariable;
 
 static class TestDescription_suite_EvaluatorTest_testAddition : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_EvaluatorTest_testAddition() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 86, "testAddition" ) {}
+ TestDescription_suite_EvaluatorTest_testAddition() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 140, "testAddition" ) {}
  void runTest() { suite_EvaluatorTest.testAddition(); }
 } testDescription_suite_EvaluatorTest_testAddition;
 
 static class TestDescription_suite_EvaluatorTest_testSubtraction : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_EvaluatorTest_testSubtraction() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 98, "testSubtraction" ) {}
+ TestDescription_suite_EvaluatorTest_testSubtraction() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 152, "testSubtraction" ) {}
  void runTest() { suite_EvaluatorTest.testSubtraction(); }
 } testDescription_suite_EvaluatorTest_testSubtraction;
 
 static class TestDescription_suite_EvaluatorTest_testMultiplication : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_EvaluatorTest_testMultiplication() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 111, "testMultiplication" ) {}
+ TestDescription_suite_EvaluatorTest_testMultiplication() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 165, "testMultiplication" ) {}
  void runTest() { suite_EvaluatorTest.testMultiplication(); }
 } testDescription_suite_EvaluatorTest_testMultiplication;
 
 static class TestDescription_suite_EvaluatorTest_testDivision : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_EvaluatorTest_testDivision() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 122, "testDivision" ) {}
+ TestDescription_suite_EvaluatorTest_testDivision() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 176, "testDivision" ) {}
  void runTest() { suite_EvaluatorTest.testDivision(); }
 } testDescription_suite_EvaluatorTest_testDivision;
 
 static class TestDescription_suite_EvaluatorTest_testList : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_EvaluatorTest_testList() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 134, "testList" ) {}
+ TestDescription_suite_EvaluatorTest_testList() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 188, "testList" ) {}
  void runTest() { suite_EvaluatorTest.testList(); }
 } testDescription_suite_EvaluatorTest_testList;
 
 static class TestDescription_suite_EvaluatorTest_testCarCdr : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_EvaluatorTest_testCarCdr() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 141, "testCarCdr" ) {}
+ TestDescription_suite_EvaluatorTest_testCarCdr() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 195, "testCarCdr" ) {}
  void runTest() { suite_EvaluatorTest.testCarCdr(); }
 } testDescription_suite_EvaluatorTest_testCarCdr;
 
 static class TestDescription_suite_EvaluatorTest_testCons : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_EvaluatorTest_testCons() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 148, "testCons" ) {}
+ TestDescription_suite_EvaluatorTest_testCons() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 202, "testCons" ) {}
  void runTest() { suite_EvaluatorTest.testCons(); }
 } testDescription_suite_EvaluatorTest_testCons;
 
 static class TestDescription_suite_EvaluatorTest_testIsPair : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_EvaluatorTest_testIsPair() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 153, "testIsPair" ) {}
+ TestDescription_suite_EvaluatorTest_testIsPair() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 207, "testIsPair" ) {}
  void runTest() { suite_EvaluatorTest.testIsPair(); }
 } testDescription_suite_EvaluatorTest_testIsPair;
 
 static class TestDescription_suite_EvaluatorTest_testIsNull : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_EvaluatorTest_testIsNull() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 161, "testIsNull" ) {}
+ TestDescription_suite_EvaluatorTest_testIsNull() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 215, "testIsNull" ) {}
  void runTest() { suite_EvaluatorTest.testIsNull(); }
 } testDescription_suite_EvaluatorTest_testIsNull;
 
 static class TestDescription_suite_EvaluatorTest_testMetaEval : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_EvaluatorTest_testMetaEval() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 169, "testMetaEval" ) {}
+ TestDescription_suite_EvaluatorTest_testMetaEval() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 223, "testMetaEval" ) {}
  void runTest() { suite_EvaluatorTest.testMetaEval(); }
 } testDescription_suite_EvaluatorTest_testMetaEval;
 
 static class TestDescription_suite_EvaluatorTest_testMetaApply : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_EvaluatorTest_testMetaApply() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 174, "testMetaApply" ) {}
+ TestDescription_suite_EvaluatorTest_testMetaApply() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 228, "testMetaApply" ) {}
  void runTest() { suite_EvaluatorTest.testMetaApply(); }
 } testDescription_suite_EvaluatorTest_testMetaApply;
 
 static class TestDescription_suite_EvaluatorTest_testMetaRead : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_EvaluatorTest_testMetaRead() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 179, "testMetaRead" ) {}
+ TestDescription_suite_EvaluatorTest_testMetaRead() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 233, "testMetaRead" ) {}
  void runTest() { suite_EvaluatorTest.testMetaRead(); }
 } testDescription_suite_EvaluatorTest_testMetaRead;
 
 static class TestDescription_suite_EvaluatorTest_testEq : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_EvaluatorTest_testEq() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 190, "testEq" ) {}
+ TestDescription_suite_EvaluatorTest_testEq() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 244, "testEq" ) {}
  void runTest() { suite_EvaluatorTest.testEq(); }
 } testDescription_suite_EvaluatorTest_testEq;
 
 static class TestDescription_suite_EvaluatorTest_testEqual : public CxxTest::RealTestDescription {
 public:
- TestDescription_suite_EvaluatorTest_testEqual() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 195, "testEqual" ) {}
+ TestDescription_suite_EvaluatorTest_testEqual() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 249, "testEqual" ) {}
  void runTest() { suite_EvaluatorTest.testEqual(); }
 } testDescription_suite_EvaluatorTest_testEqual;
+
+static class TestDescription_suite_EvaluatorTest_testBackQuote : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testBackQuote() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 255, "testBackQuote" ) {}
+ void runTest() { suite_EvaluatorTest.testBackQuote(); }
+} testDescription_suite_EvaluatorTest_testBackQuote;
+
+static class TestDescription_suite_EvaluatorTest_testDottedTailParamList : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testDottedTailParamList() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 263, "testDottedTailParamList" ) {}
+ void runTest() { suite_EvaluatorTest.testDottedTailParamList(); }
+} testDescription_suite_EvaluatorTest_testDottedTailParamList;
+
+static class TestDescription_suite_EvaluatorTest_testMacroApplication : public CxxTest::RealTestDescription {
+public:
+ TestDescription_suite_EvaluatorTest_testMacroApplication() : CxxTest::RealTestDescription( Tests_EvaluatorTest, suiteDescription_EvaluatorTest, 271, "testMacroApplication" ) {}
+ void runTest() { suite_EvaluatorTest.testMacroApplication(); }
+} testDescription_suite_EvaluatorTest_testMacroApplication;
 
 #include <cxxtest/Root.cpp>
 const char* CxxTest::RealWorldDescription::_worldName = "cxxtest";
