@@ -330,8 +330,10 @@ void write(Object* obj, std::ostream& os) {
         case MACRO:
         case CLOSURE:
             os << (obj->type == CLOSURE ? "Closure" : "Macro") << " at " << obj->closure << std::endl;
+            break;
         case PRIM_PROC:
             os << "Primitive Procedure"; 
+            break;
         default:
             break;
     }

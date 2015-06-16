@@ -243,7 +243,7 @@ Object* Reader::readBackQuote() {
             }
             cur = cdr(cur);
         }
-        result = package(reverseList(result), "backquote");
+        result = package(result, "backquote");
     }
     return result;
 }

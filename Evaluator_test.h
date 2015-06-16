@@ -269,9 +269,13 @@ public:
     }
 
     void testMacroApplication() {
-        assertEvalsTo("(begin (defmacro (mif p c a) `(if ,p ,c ,a)) #t", "#t");
-        //assertEvalsTo("(begin (defmacro (when p . stms) `(if ,p ,(cons 'begin stms) '())) #t)", "#t");
-        assertEvalsTo("(mif #t 1 2)", "1");
+        assertEvalsTo("(begin (defmacro (my-if p c a) `(if ,p ,c ,a)) #t", "#t");
+        assertEvalsTo("(my-if #t 1 2)", "1");
+        assertEvalsTo("(my-if #t 1 (car 1))", "1");
+        assertEvalsTo("(my-if #f (car 1) 2)", "2");
+        assertEvalsTo("(begin (defmacro (when p . stms) `(if ,p ,(cons 'begin stms) '())) #t)", "#t");
+        assertEvalsTo("(when #f (car 1) (car 2))", "()");
+        assertEvalsTo("(when #t (car (cons 1 2)) (cdr (cons 3 4)))", "4");
     }
 
 

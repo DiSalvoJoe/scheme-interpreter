@@ -17,7 +17,6 @@ void runProgram(char* file_name) {
     while (getline(file, line)) {
         prog += line;
     }
-    //cout << prog << endl;
     ChunkHeap prog_storage;
     Object* program = getSchemeString(prog_storage, prog.c_str());
 
@@ -25,8 +24,12 @@ void runProgram(char* file_name) {
     Reader reader(program);
     Evaluator& evaluator = Evaluator::getEvaluator();
     Object* exp;
-    while ((exp = reader.read())) {
-        evaluator.eval(exp);
+    try {
+        while ((exp = reader.read())) {
+            evaluator.eval(exp);
+        }
+    } catch (const exception& e) {
+        cerr << e.what() << endl;
     }
 }
 
@@ -38,14 +41,19 @@ void repl() {
     while (getline(cin, line)) {
         Object* exp = getSchemeString(prog_storage, line.c_str());
         Reader reader(exp);
-        write(evaluator.eval(reader.read()), cout);
+        try {
+            write(evaluator.eval(reader.read()), cout);
+        } catch (const exception& e) {
+            cerr << e.what() << endl;
+        }
         cout << endl;
         cout << "scheme: >> ";
     }
+    cout << endl;
 }
 
 int main(int argc, char** argv) {
-    // argv[1] is the name of the program
+    // argv[1] is the name of the program to interpret
     if (argc != 2) {
         repl();
     } else {

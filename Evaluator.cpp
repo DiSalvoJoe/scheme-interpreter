@@ -37,6 +37,9 @@ Object* Evaluator::eval(Object* obj) {
     }
 
     Object* result = top_frame->result;
+    if (top_frame->receive_return_as_list) {
+        result = reverseList(result);
+    }
     top_frame = nullptr;
     return result;
 }
@@ -229,13 +232,15 @@ void EvaluationProcedure::selectApply(Evaluator& evaluator) {
         // Apply the macro's closure to the unevaluated arguments, then 
         // go to applyMacro (which does dispatchEval on the result)
         top->cont = &EvaluationProcedure::applyMacro;
-        Frame* transform = getFrame(evaluator.memory);
+        std::pair<Object*, Frame*> alloc = getFrameAndObject(evaluator.memory, CONS);
+        Object* args_proc = alloc.first;
+        Frame* transform = alloc.second;
         top = evaluator.top_frame; // in case GC occurred
-        proc = top->result; // in case GC occurred
-        car(top->to_eval) = top->to_eval;
-        cdr(top->to_eval) = proc;
-        //write(car(result), std::cout);
-        setFrame(transform, nullptr, top->to_eval, top, top->env, &EvaluationProcedure::applyClosure, false);
+        car(args_proc) = top->to_eval;
+        cdr(args_proc) = top->result;
+        top->to_eval = nullptr;
+        top->result = nullptr;
+        setFrame(transform, nullptr, args_proc, top, top->env, &EvaluationProcedure::applyClosure, false);
         evaluator.top_frame = transform;
     }
 }
@@ -245,6 +250,7 @@ void EvaluationProcedure::applyMacro(Evaluator& evaluator) {
     top->to_eval = top->result;
     top->result = nullptr;
     top->cont = &EvaluationProcedure::dispatchEval;
+    //write(top->to_eval, std::cout);
     return;
 }
 
@@ -483,6 +489,7 @@ void EvaluationProcedure::add(Evaluator& evaluator) {
     Object* num;
     while (args) {
         num = car(args);
+        REQUIRE(num->type == INT || num->type == FLOAT, "Cannot add non-numeric values.");
         args = cdr(args);
         if (as_int) {
             if (num->type == FLOAT) {
@@ -507,6 +514,7 @@ void EvaluationProcedure::subtract(Evaluator& evaluator) {
     args = args ? cdr(args) : args;
     while (args) {
         num = car(args);
+        REQUIRE(num->type == INT || num->type == FLOAT, "Cannot subtract non-numeric values.");
         args = cdr(args);
         if (num->type == FLOAT) {
             num->floatN *= -1;
@@ -525,6 +533,7 @@ void EvaluationProcedure::divide(Evaluator& evaluator) {
     bool as_int = true;
     if (args) {
         num = car(args);
+        REQUIRE(num->type == INT || num->type == FLOAT, "Cannot divide non-numeric values.");
         args = cdr(args);
         if (num->type == INT) {
             product->integer = num->integer;
@@ -538,6 +547,7 @@ void EvaluationProcedure::divide(Evaluator& evaluator) {
     while (args) {
         num = car(args);
         args = cdr(args);
+        REQUIRE(num->type == INT || num->type == FLOAT, "Cannot divide non-numeric values.");
         if (as_int) {
             if (num->type == FLOAT) {
                 product->type = FLOAT;
@@ -564,6 +574,7 @@ void EvaluationProcedure::multiply(Evaluator& evaluator) {
     while (args) {
         num = car(args);
         args = cdr(args);
+        REQUIRE(num->type == INT || num->type == FLOAT, "Cannot multiply non-numeric values.");
         if (as_int) {
             if (num->type == FLOAT) {
                 product->type = FLOAT;
@@ -594,12 +605,14 @@ void EvaluationProcedure::cons(Evaluator& evaluator) {
 
 void EvaluationProcedure::getCar(Evaluator& evaluator) {
     Object* args = evaluator.top_frame->result;
+    REQUIRE(car(args)->type == CONS, "Cannot take car of non-cons object");
     evaluator.top_frame->result = caar(args);
     evaluator.sendReturn();
 }
 
 void EvaluationProcedure::getCdr(Evaluator& evaluator) {
     Object* args = evaluator.top_frame->result;
+    REQUIRE(car(args)->type == CONS, "Cannot take cdr of non-cons object");
     evaluator.top_frame->result = cdar(args);
     evaluator.sendReturn();
 }

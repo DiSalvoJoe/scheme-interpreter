@@ -39,6 +39,19 @@ inline Frame* getFrame(Mem& memory) {
 }
 
 template <class Mem>
+inline std::pair<Object*, Frame*> getFrameAndObject(Mem& memory, Type type) {
+    char* bytes = memory.getBytes(sizeof(Frame)+sizeof(Object));
+    Frame* frame = (Frame*)bytes;
+    bytes+= sizeof(Frame);
+    Object* obj = (Object*)bytes;
+
+    obj->marked = UNMARKED;
+    obj->type = type;
+    frame->marked = UNMARKED;
+    return std::pair<Object*, Frame*>(obj, frame);
+}
+
+template <class Mem>
 inline Object* getPrimProc(Mem& memory, FrameProcedure procedure) {
     Object* p = getObject(memory, PRIM_PROC);
     p->prim_proc = procedure;
