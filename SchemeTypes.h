@@ -138,6 +138,8 @@ bool asBool(Object* obj);
 
 bool equal(Object* left, Object* right);
 
+bool eq(Object* left, Object* right);
+
 size_t size(Object* list);
 
 Object* copy(Object* obj);

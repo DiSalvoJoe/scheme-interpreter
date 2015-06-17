@@ -179,6 +179,41 @@ bool equal(Object* left, Object* right) {
     return result;
 }
 
+bool eq(Object* l, Object* r) {
+    if (!l || !r) {
+        return l == r;
+    }
+    if (l->type != r->type) {
+        return false;
+    }
+    switch (l->type) {
+        case INT:
+            return l->integer == r->integer;
+        case FLOAT:
+            return l->floatN == r->floatN;
+        case CHAR:
+            return l->character == r->character;
+        case BOOL:
+            return l->boolean == r->boolean;
+        case STRING:
+             return l->string == r->string; // pointer equalityj
+        case SYMBOL:
+             return l->sym == r->sym;
+        case CONS:
+             return &l->cell== &r->cell;
+        case CONTINUATION:
+            return false; // to do
+        case CLOSURE:
+            return l->closure == r->closure;
+        case PRIM_PROC:
+            return l->prim_proc == r->prim_proc;
+        case MACRO:
+            return l->closure == r->closure;
+        default:
+            return false;
+    }
+}
+
 size_t size(Object* obj) {
     if (!obj) {
         return 0;
@@ -276,6 +311,7 @@ Object* copy(Object* obj) {
             result->closure->env = copy(obj->closure->env);
             obj->cell.car = result;
             obj->marked = FORWARDED;
+            result->type = obj->type;
             return result;
         case PRIM_PROC:
             result = getPrimProc(memory, obj->prim_proc);

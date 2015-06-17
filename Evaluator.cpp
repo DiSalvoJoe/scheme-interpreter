@@ -684,7 +684,7 @@ void EvaluationProcedure::structuralEquality(Evaluator& evaluator) {
 }
 
 void EvaluationProcedure::pointerEquality(Evaluator& evaluator) {
-    argsToBool(evaluator, [](Object* l, Object* r) -> bool {return l == r;});
+    argsToBool(evaluator, eq);
 }
 
 

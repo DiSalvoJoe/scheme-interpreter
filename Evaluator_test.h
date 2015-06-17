@@ -270,12 +270,19 @@ public:
 
     void testMacroApplication() {
         assertEvalsTo("(begin (defmacro (my-if p c a) `(if ,p ,c ,a)) #t", "#t");
+        assertEvalsTo("(begin (defmacro (my-if2 p c a) (list 'if p c a)) #t", "#t");
         assertEvalsTo("(my-if #t 1 2)", "1");
+        assertEvalsTo("(my-if2 #t 1 2)", "1");
         assertEvalsTo("(my-if #t 1 (car 1))", "1");
+        assertEvalsTo("(my-if2 #t 1 (car 1))", "1");
         assertEvalsTo("(my-if #f (car 1) 2)", "2");
+        assertEvalsTo("(my-if2 #f (car 1) 2)", "2");
         assertEvalsTo("(begin (defmacro (when p . stms) `(if ,p ,(cons 'begin stms) '())) #t)", "#t");
+        assertEvalsTo("(begin (defmacro (when2 p . stms) (list 'if p (cons 'begin stms) '())) #t)", "#t");
         assertEvalsTo("(when #f (car 1) (car 2))", "()");
+        assertEvalsTo("(when2 #f (car 1) (car 2))", "()");
         assertEvalsTo("(when #t (car (cons 1 2)) (cdr (cons 3 4)))", "4");
+        assertEvalsTo("(when2 #t (car (cons 1 2)) (cdr (cons 3 4)))", "4");
     }
 
 
